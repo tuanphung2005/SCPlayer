@@ -1,0 +1,82 @@
+plugins {
+    alias(libs.plugins.android.application)
+}
+
+android {
+    namespace 'com.example.scplayer'
+    compileSdk 36
+
+    defaultConfig {
+        applicationId "com.example.scplayer"
+        minSdk 24
+        targetSdk 36
+        versionCode 1
+        versionName "1.0"
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        
+        // Load .env file
+        def envFile = rootProject.file('.env')
+        if (envFile.exists()) {
+            envFile.readLines().each { line ->
+                if (line && !line.startsWith('#') && line.contains('=')) {
+                    def (key, value) = line.split('=', 2)
+                    buildConfigField "String", key.trim(), "\"${value.trim()}\""
+                }
+            }
+        } else {
+            // Default values if .env doesn't exist
+            buildConfigField "String", "SOUNDCLOUD_CLIENT_ID", "\"your_client_id_here\""
+            buildConfigField "String", "SOUNDCLOUD_CLIENT_SECRET", "\"your_client_secret_here\""
+            buildConfigField "String", "SOUNDCLOUD_REDIRECT_URI", "\"scplayer://callback\""
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
+    }
+    buildFeatures {
+        viewBinding true
+        buildConfig true
+    }
+}
+
+dependencies {
+    implementation libs.appcompat
+    implementation libs.material
+    implementation libs.activity
+    implementation libs.constraintlayout
+    implementation libs.coordinatorlayout
+    implementation libs.recyclerview
+    
+    // Networking
+    implementation libs.retrofit
+    implementation libs.retrofit.gson
+    implementation libs.okhttp
+    implementation libs.okhttp.logging
+    implementation libs.gson
+    
+    // Image loading
+    implementation libs.glide
+    annotationProcessor libs.glide.compiler
+    
+    // Media playback
+    implementation libs.media3.exoplayer
+    implementation libs.media3.ui
+    implementation libs.media3.session
+    
+    // Lifecycle
+    implementation libs.lifecycle.viewmodel
+    implementation libs.lifecycle.livedata
+    
+    testImplementation libs.junit
+    androidTestImplementation libs.ext.junit
+    androidTestImplementation libs.espresso.core
+}
