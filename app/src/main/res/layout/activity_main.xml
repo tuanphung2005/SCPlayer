@@ -112,12 +112,4 @@
 
     </androidx.core.widget.NestedScrollView>
 
-    <include
-        android:id="@+id/playerControls"
-        layout="@layout/player_controls"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom"
-        android:visibility="gone" />
-
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

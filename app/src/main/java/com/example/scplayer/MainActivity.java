@@ -1,25 +1,14 @@
 package com.example.scplayer;
 
 import android.content.Intent;
-import android.net.Uri;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
-import android.util.Log;
-import android.view.View;
 import android.widget.Button;
-import android.widget.ImageButton;
-import android.widget.ImageView;
-import android.widget.SeekBar;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.media3.common.Player;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.bumptech.glide.Glide;
 import com.example.scplayer.adapters.TrackAdapter;
 import com.example.scplayer.api.ApiClient;
 import com.example.scplayer.api.SoundCloudApi;
@@ -30,7 +19,6 @@ import com.example.scplayer.player.MusicPlayerService;
 import com.google.android.material.textfield.TextInputEditText;
 
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -50,21 +38,7 @@ public class MainActivity extends AppCompatActivity implements TrackAdapter.OnTr
     private RecyclerView recyclerView;
     private TrackAdapter trackAdapter;
     
-    // player
     private MusicPlayerService playerService;
-    private View playerControls;
-    private ImageView playerArtwork;
-    private TextView playerTrackTitle;
-    private TextView playerTrackArtist;
-    private SeekBar playerSeekBar;
-    private TextView playerCurrentTime;
-    private TextView playerTotalTime;
-    private ImageButton btnPlayPause;
-    private ImageButton btnPrevious;
-    private ImageButton btnNext;
-    
-    private Handler handler = new Handler(Looper.getMainLooper());
-    private Runnable updateSeekBar;
     
     private SoundCloudApi api;
 
@@ -82,8 +56,9 @@ public class MainActivity extends AppCompatActivity implements TrackAdapter.OnTr
         
         initializeViews();
         setupAuth();
-        setupPlayer();
         setupSearch();
+        
+        playerService = MusicPlayerService.getInstance(this);
     }
     
     private void initializeViews() {
@@ -92,17 +67,6 @@ public class MainActivity extends AppCompatActivity implements TrackAdapter.OnTr
         searchInput = findViewById(R.id.searchInput);
         btnSearch = findViewById(R.id.btnSearch);
         recyclerView = findViewById(R.id.recyclerView);
-        
-        playerControls = findViewById(R.id.playerControls);
-        playerArtwork = findViewById(R.id.playerArtwork);
-        playerTrackTitle = findViewById(R.id.playerTrackTitle);
-        playerTrackArtist = findViewById(R.id.playerTrackArtist);
-        playerSeekBar = findViewById(R.id.playerSeekBar);
-        playerCurrentTime = findViewById(R.id.playerCurrentTime);
-        playerTotalTime = findViewById(R.id.playerTotalTime);
-        btnPlayPause = findViewById(R.id.btnPlayPause);
-        btnPrevious = findViewById(R.id.btnPrevious);
-        btnNext = findViewById(R.id.btnNext);
     }
     
     private void setupAuth() {
@@ -120,62 +84,6 @@ public class MainActivity extends AppCompatActivity implements TrackAdapter.OnTr
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(intent);
         finish();
-    }
-    
-    private void setupPlayer() {
-        playerService = MusicPlayerService.getInstance(this);
-        
-        playerService.setPlayerListener(new MusicPlayerService.PlayerListener() {
-            @Override
-            public void onTrackChanged(Track track) {
-                runOnUiThread(() -> updatePlayerUI(track));
-            }
-            
-            @Override
-            public void onPlaybackStateChanged(int state) {
-                runOnUiThread(() -> updatePlayPauseButton());
-            }
-            
-            @Override
-            public void onIsPlayingChanged(boolean isPlaying) {
-                runOnUiThread(() -> {
-                    updatePlayPauseButton();
-                    if (isPlaying) {
-                        startSeekBarUpdate();
-                    } else {
-                        stopSeekBarUpdate();
-                    }
-                });
-            }
-        });
-        
-        btnPlayPause.setOnClickListener(v -> {
-            if (playerService.isPlaying()) {
-                playerService.pause();
-            } else {
-                playerService.play();
-            }
-        });
-        
-        btnPrevious.setOnClickListener(v -> playerService.playPrevious());
-        btnNext.setOnClickListener(v -> playerService.playNext());
-        
-        playerSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            @Override
-            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                if (fromUser) {
-                    playerService.seekTo(progress);
-                }
-            }
-            
-            @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {}
-            
-            @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {}
-        });
-        
-        setupSeekBarUpdate();
     }
     
     private void setupSearch() {
@@ -226,7 +134,6 @@ public class MainActivity extends AppCompatActivity implements TrackAdapter.OnTr
     @Override
     public void onPlayClick(Track track, int position) {
         playerService.playTrack(track);
-        playerControls.setVisibility(View.VISIBLE);
     }
     
     @Override
@@ -258,68 +165,5 @@ public class MainActivity extends AppCompatActivity implements TrackAdapter.OnTr
                 });
             }
         });
-    }
-    
-    private void updatePlayerUI(Track track) {
-        if (track == null) return;
-        
-        playerTrackTitle.setText(track.getTitle());
-        playerTrackArtist.setText(track.getUser() != null ? track.getUser().getUsername() : "Unknown Artist");
-        
-        String artworkUrl = track.getHighQualityArtworkUrl();
-        if (artworkUrl != null) {
-            Glide.with(this)
-                    .load(artworkUrl)
-                    .placeholder(R.drawable.ic_launcher_foreground)
-                    .into(playerArtwork);
-        }
-        
-        long duration = playerService.getDuration();
-        if (duration > 0) {
-            playerSeekBar.setMax((int) duration);
-            playerTotalTime.setText(formatTime(duration));
-        }
-    }
-    
-    private void updatePlayPauseButton() {
-        if (playerService.isPlaying()) {
-            btnPlayPause.setImageResource(android.R.drawable.ic_media_pause);
-        } else {
-            btnPlayPause.setImageResource(android.R.drawable.ic_media_play);
-        }
-    }
-    
-    private void setupSeekBarUpdate() {
-        updateSeekBar = new Runnable() {
-            @Override
-            public void run() {
-                if (playerService != null && playerService.isPlaying()) {
-                    long currentPosition = playerService.getCurrentPosition();
-                    playerSeekBar.setProgress((int) currentPosition);
-                    playerCurrentTime.setText(formatTime(currentPosition));
-                    handler.postDelayed(this, 1000);
-                }
-            }
-        };
-    }
-    
-    private void startSeekBarUpdate() {
-        handler.post(updateSeekBar);
-    }
-    
-    private void stopSeekBarUpdate() {
-        handler.removeCallbacks(updateSeekBar);
-    }
-    
-    private String formatTime(long milliseconds) {
-        long minutes = TimeUnit.MILLISECONDS.toMinutes(milliseconds);
-        long seconds = TimeUnit.MILLISECONDS.toSeconds(milliseconds) % 60;
-        return String.format("%d:%02d", minutes, seconds);
-    }
-    
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        stopSeekBarUpdate();
     }
 }
