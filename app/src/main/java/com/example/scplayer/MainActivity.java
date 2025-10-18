@@ -23,10 +23,10 @@ public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = "MainActivity";
 
-    private AuthManager authManager;
-    private Button btnLogout;
-    private TextInputEditText searchInput;
-    private Button btnSearch;
+    private AuthManager auth;
+    private Button logout;
+    private TextInputEditText input;
+    private Button search;
     private SoundCloudApi api;
 
     @Override
@@ -34,9 +34,10 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         
-        authManager = new AuthManager(this);
+        ApiClient.initialize(this);
+        auth = new AuthManager(this);
         
-        if (!authManager.isLoggedIn()) {
+        if (!auth.isLoggedIn()) {
             navigateToLogin();
             return;
         }
@@ -47,16 +48,16 @@ public class MainActivity extends AppCompatActivity {
     }
     
     private void initializeViews() {
-        btnLogout = findViewById(R.id.btnLogout);
-        searchInput = findViewById(R.id.searchInput);
-        btnSearch = findViewById(R.id.btnSearch);
+        logout = findViewById(R.id.btnLogout);
+        input = findViewById(R.id.searchInput);
+        search = findViewById(R.id.btnSearch);
     }
     
     private void setupAuth() {
         api = ApiClient.getSoundCloudApi();
         
-        btnLogout.setOnClickListener(v -> {
-            authManager.logout();
+        logout.setOnClickListener(v -> {
+            auth.logout();
             Toast.makeText(this, "Logged out", Toast.LENGTH_SHORT).show();
             navigateToLogin();
         });
@@ -70,34 +71,34 @@ public class MainActivity extends AppCompatActivity {
     }
     
     private void setupSearch() {
-        btnSearch.setOnClickListener(v -> {
-            String query = searchInput.getText().toString().trim();
-            if (!query.isEmpty()) {
-                searchTracks(query);
+        search.setOnClickListener(v -> {
+            String q = input.getText().toString().trim();
+            if (!q.isEmpty()) {
+                searchTracks(q);
             } else {
                 Toast.makeText(this, "Please enter a search query", Toast.LENGTH_SHORT).show();
             }
         });
     }
     
-    private void searchTracks(String query) {
-        Call<SearchResponse> call = api.searchTracks(query, ApiClient.getClientId(), 20, 0);
+    private void searchTracks(String q) {
+        Call<SearchResponse> call = api.searchTracks(q, 20, 0);
         
         call.enqueue(new Callback<SearchResponse>() {
             @Override
-            public void onResponse(Call<SearchResponse> call, Response<SearchResponse> response) {
-                if (response.isSuccessful() && response.body() != null) {
-                    int trackCount = response.body().getCollection().size();
+            public void onResponse(Call<SearchResponse> call, Response<SearchResponse> res) {
+                if (res.isSuccessful() && res.body() != null) {
+                    int count = res.body().getCollection().size();
                     runOnUiThread(() -> {
-                        if (trackCount == 0) {
+                        if (count == 0) {
                             Toast.makeText(MainActivity.this, "No tracks found", Toast.LENGTH_SHORT).show();
                         } else {
-                            Toast.makeText(MainActivity.this, "Found " + trackCount + " tracks", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(MainActivity.this, "Found " + count + " tracks", Toast.LENGTH_SHORT).show();
                         }
                     });
                 } else {
                     runOnUiThread(() -> {
-                        Toast.makeText(MainActivity.this, "Search failed: " + response.code(), Toast.LENGTH_SHORT).show();
+                        Toast.makeText(MainActivity.this, "Search failed: " + res.code(), Toast.LENGTH_SHORT).show();
                     });
                 }
             }

@@ -17,14 +17,16 @@ public class LoginActivity extends AppCompatActivity {
 
     private static final String TAG = "LoginActivity";
     
-    private AuthManager authManager;
-    private TextView welcomeText;
-    private Button btnLogin;
+    private AuthManager auth;
+    private TextView welcome;
+    private Button login;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
+        
+        ApiClient.initialize(this);
         
         initializeViews();
         setupAuth();
@@ -40,22 +42,22 @@ public class LoginActivity extends AppCompatActivity {
     }
     
     private void initializeViews() {
-        welcomeText = findViewById(R.id.welcomeText);
-        btnLogin = findViewById(R.id.btnLogin);
+        welcome = findViewById(R.id.welcomeText);
+        login = findViewById(R.id.btnLogin);
     }
     
     private void setupAuth() {
-        authManager = new AuthManager(this);
+        auth = new AuthManager(this);
         
-        if (authManager.isLoggedIn()) {
+        if (auth.isLoggedIn()) {
             navigateToMain();
             return;
         }
         
-        btnLogin.setOnClickListener(v -> {
-            String authUrl = authManager.getAuthorizationUrl();
-            Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(authUrl));
-            startActivity(browserIntent);
+        login.setOnClickListener(v -> {
+            String url = auth.getAuthorizationUrl();
+            Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+            startActivity(intent);
         });
     }
     
@@ -70,37 +72,37 @@ public class LoginActivity extends AppCompatActivity {
         String action = intent.getAction();
         Log.d(TAG, "Intent action: " + action);
         
-        Uri data = intent.getData();
-        Log.d(TAG, "Intent data URI: " + data);
+        Uri uri = intent.getData();
+        Log.d(TAG, "Intent data URI: " + uri);
         
-        if (data == null) {
+        if (uri == null) {
             Log.d(TAG, "No URI data in intent");
             return;
         }
         
-        Log.d(TAG, "URI scheme: " + data.getScheme());
-        Log.d(TAG, "URI host: " + data.getHost());
-        Log.d(TAG, "URI path: " + data.getPath());
-        Log.d(TAG, "URI query: " + data.getQuery());
-        Log.d(TAG, "URI fragment: " + data.getFragment());
-        Log.d(TAG, "Full URI string: " + data.toString());
+        Log.d(TAG, "URI scheme: " + uri.getScheme());
+        Log.d(TAG, "URI host: " + uri.getHost());
+        Log.d(TAG, "URI path: " + uri.getPath());
+        Log.d(TAG, "URI query: " + uri.getQuery());
+        Log.d(TAG, "URI fragment: " + uri.getFragment());
+        Log.d(TAG, "Full URI string: " + uri.toString());
         
-        String redirectUri = ApiClient.getRedirectUri();
-        Log.d(TAG, "Expected redirect URI: " + redirectUri);
-        Log.d(TAG, "URI starts with redirect? " + data.toString().startsWith(redirectUri));
+        String redirect = ApiClient.getRedirectUri();
+        Log.d(TAG, "Expected redirect URI: " + redirect);
+        Log.d(TAG, "URI starts with redirect? " + uri.toString().startsWith(redirect));
         
-        if (data.toString().startsWith(redirectUri)) {
+        if (uri.toString().startsWith(redirect)) {
             Log.d(TAG, "Redirect URI matched! Processing OAuth response...");
             
-            String code = data.getQueryParameter("code");
-            String error = data.getQueryParameter("error");
-            String errorDescription = data.getQueryParameter("error_description");
+            String code = uri.getQueryParameter("code");
+            String err = uri.getQueryParameter("error");
+            String desc = uri.getQueryParameter("error_description");
             
             Log.d(TAG, "Authorization code: " + code);
-            Log.d(TAG, "Error: " + error);
-            Log.d(TAG, "Error description: " + errorDescription);
+            Log.d(TAG, "Error: " + err);
+            Log.d(TAG, "Error description: " + desc);
             
-            String fragment = data.getFragment();
+            String fragment = uri.getFragment();
             if (fragment != null) {
                 Log.d(TAG, "Fragment found: " + fragment);
                 if (fragment.contains("access_token=")) {
@@ -108,12 +110,12 @@ public class LoginActivity extends AppCompatActivity {
                 }
             }
             
-            authManager.handleAuthorizationResponse(data, new AuthManager.AuthCallback() {
+            auth.handleAuthorizationResponse(uri, new AuthManager.AuthCallback() {
                 @Override
-                public void onSuccess(String accessToken) {
-                    Log.d(TAG, "Auth SUCCESS! Token: " + accessToken.substring(0, Math.min(10, accessToken.length())) + "...");
+                public void onSuccess(String token) {
+                    Log.d(TAG, "Auth SUCCESS! Token: " + token.substring(0, Math.min(10, token.length())) + "...");
                     runOnUiThread(() -> {
-                        Toast.makeText(LoginActivity.this, "✅ Login successful!", Toast.LENGTH_LONG).show();
+                        Toast.makeText(LoginActivity.this, "Login successful!", Toast.LENGTH_LONG).show();
                         navigateToMain();
                     });
                 }
@@ -122,7 +124,7 @@ public class LoginActivity extends AppCompatActivity {
                 public void onError(String error) {
                     Log.e(TAG, "Auth ERROR: " + error);
                     runOnUiThread(() -> {
-                        Toast.makeText(LoginActivity.this, "❌ Login failed: " + error, Toast.LENGTH_LONG).show();
+                        Toast.makeText(LoginActivity.this, "`Login failed: " + error, Toast.LENGTH_LONG).show();
                     });
                 }
             });

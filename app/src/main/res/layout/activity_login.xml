@@ -60,18 +60,4 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintWidth_max="400dp" />
 
-    <TextView
-        android:id="@+id/privacyText"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="By logging in, you agree to SoundCloud's terms"
-        android:textSize="12sp"
-        android:textColor="@android:color/white"
-        android:alpha="0.7"
-        android:gravity="center"
-        android:layout_marginBottom="16dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
-
 </androidx.constraintlayout.widget.ConstraintLayout>
