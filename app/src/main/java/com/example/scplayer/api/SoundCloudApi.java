@@ -24,84 +24,82 @@ public interface SoundCloudApi {
     @FormUrlEncoded
     @POST("oauth2/token")
     Call<AccessToken> getAccessToken(
-            @Field("grant_type") String grantType,
-            @Field("client_id") String clientId,
-            @Field("client_secret") String clientSecret,
-            @Field("redirect_uri") String redirectUri,
+            @Field("grant_type") String grant,
+            @Field("client_id") String id,
+            @Field("client_secret") String secret,
+            @Field("redirect_uri") String redirect,
             @Field("code") String code
     );
     
     @FormUrlEncoded
     @POST("oauth2/token")
     Call<AccessToken> refreshToken(
-            @Field("grant_type") String grantType,
-            @Field("client_id") String clientId,
-            @Field("client_secret") String clientSecret,
-            @Field("refresh_token") String refreshToken
+            @Field("grant_type") String grant,
+            @Field("client_id") String id,
+            @Field("client_secret") String secret,
+            @Field("refresh_token") String refresh
     );
     
     // user
     @GET("me")
-    Call<User> getCurrentUser(@Query("oauth_token") String token);
+    Call<User> getCurrentUser();
     
     @GET("users/{id}")
-    Call<User> getUser(@Path("id") long userId, @Query("client_id") String clientId);
+    Call<User> getUser(@Path("id") long id);
     
     // tracks
     @GET("tracks")
     Call<SearchResponse> searchTracks(
-            @Query("q") String query,
-            @Query("client_id") String clientId,
+            @Query("q") String q,
             @Query("limit") int limit,
             @Query("offset") int offset
     );
     
     @GET("tracks/{id}")
-    Call<Track> getTrack(@Path("id") long trackId, @Query("client_id") String clientId);
+    Call<Track> getTrack(@Path("id") long id);
     
     @GET("me/favorites")
-    Call<List<Track>> getFavoriteTracks(@Query("oauth_token") String token);
+    Call<List<Track>> getFavoriteTracks();
     
     @PUT("me/favorites/{id}")
-    Call<Void> likeTrack(@Path("id") long trackId, @Query("oauth_token") String token);
+    Call<Void> likeTrack(@Path("id") long id);
     
     @DELETE("me/favorites/{id}")
-    Call<Void> unlikeTrack(@Path("id") long trackId, @Query("oauth_token") String token);
+    Call<Void> unlikeTrack(@Path("id") long id);
     
     // playlists
     @GET("playlists")
     Call<List<Playlist>> searchPlaylists(
-            @Query("q") String query,
-            @Query("client_id") String clientId,
+            @Query("q") String q,
             @Query("limit") int limit
     );
     
     @GET("playlists/{id}")
-    Call<Playlist> getPlaylist(@Path("id") long playlistId, @Query("client_id") String clientId);
+    Call<Playlist> getPlaylist(@Path("id") long id);
     
     @GET("me/playlists")
-    Call<List<Playlist>> getUserPlaylists(@Query("oauth_token") String token);
+    Call<List<Playlist>> getUserPlaylists();
     
     @GET("me/playlist_likes")
-    Call<List<Playlist>> getLikedPlaylists(@Query("oauth_token") String token);
+    Call<List<Playlist>> getLikedPlaylists();
     
     @PUT("me/playlist_likes/{id}")
-    Call<Void> likePlaylist(@Path("id") long playlistId, @Query("oauth_token") String token);
+    Call<Void> likePlaylist(@Path("id") long id);
     
     @DELETE("me/playlist_likes/{id}")
-    Call<Void> unlikePlaylist(@Path("id") long playlistId, @Query("oauth_token") String token);
+    Call<Void> unlikePlaylist(@Path("id") long id);
     
     // following
     @GET("me/followings")
-    Call<List<User>> getFollowings(@Query("oauth_token") String token);
+    Call<List<User>> getFollowings();
     
     @PUT("me/followings/{id}")
-    Call<Void> followUser(@Path("id") long userId, @Query("oauth_token") String token);
+    Call<Void> followUser(@Path("id") long id);
     
     @DELETE("me/followings/{id}")
-    Call<Void> unfollowUser(@Path("id") long userId, @Query("oauth_token") String token);
+    Call<Void> unfollowUser(@Path("id") long id);
     
     // stream
     @GET("tracks/{id}/stream")
-    Call<Void> getStreamUrl(@Path("id") long trackId, @Query("client_id") String clientId);
+    Call<Void> getStreamUrl(@Path("id") long trackId);
 }

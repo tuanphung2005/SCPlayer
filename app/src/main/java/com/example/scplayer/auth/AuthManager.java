@@ -16,41 +16,41 @@ import retrofit2.Response;
 
 public class AuthManager {
     private static final String TAG = "AuthManager";
-    private static final String PREFS_NAME = "SoundCloudAuth";
-    private static final String KEY_ACCESS_TOKEN = "access_token";
-    private static final String KEY_REFRESH_TOKEN = "refresh_token";
-    private static final String KEY_TOKEN_EXPIRY = "token_expiry";
+    private static final String PREFS = "SoundCloudAuth";
+    private static final String KEY_TOKEN = "access_token";
+    private static final String KEY_REFRESH = "refresh_token";
+    private static final String KEY_EXPIRY = "token_expiry";
     
-    private static final String AUTHORIZATION_URL = "https://soundcloud.com/connect";
+    private static final String AUTH_URL = "https://soundcloud.com/connect";
     private static final String SCOPE = "non-expiring";
     
-    private final Context context;
+    private final Context ctx;
     private final SharedPreferences prefs;
     private final SoundCloudApi api;
     
     public AuthManager(Context context) {
-        this.context = context;
-        this.prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        this.ctx = context;
+        this.prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
         this.api = ApiClient.getSoundCloudApi();
     }
     
     public String getAuthorizationUrl() {
-        Uri.Builder builder = Uri.parse(AUTHORIZATION_URL).buildUpon();
+        Uri.Builder builder = Uri.parse(AUTH_URL).buildUpon();
         builder.appendQueryParameter("client_id", ApiClient.getClientId());
         builder.appendQueryParameter("redirect_uri", ApiClient.getRedirectUri());
         builder.appendQueryParameter("response_type", "code");
         builder.appendQueryParameter("scope", SCOPE);
         
-        String authUrl = builder.build().toString();
+        String url = builder.build().toString();
         Log.d(TAG, "=== Authorization URL Generated ===");
         Log.d(TAG, "Client ID: " + ApiClient.getClientId());
         Log.d(TAG, "Redirect URI: " + ApiClient.getRedirectUri());
         Log.d(TAG, "Response Type: code");
         Log.d(TAG, "Scope: " + SCOPE);
-        Log.d(TAG, "Full Auth URL: " + authUrl);
+        Log.d(TAG, "Full Auth URL: " + url);
         Log.d(TAG, "===================================");
         
-        return authUrl;
+        return url;
     }
     
     public void handleAuthorizationResponse(Uri uri, AuthCallback callback) {
@@ -58,20 +58,20 @@ public class AuthManager {
         Log.d(TAG, "URI: " + uri.toString());
         
         String code = uri.getQueryParameter("code");
-        String error = uri.getQueryParameter("error");
-        String errorDescription = uri.getQueryParameter("error_description");
+        String err = uri.getQueryParameter("error");
+        String desc = uri.getQueryParameter("error_description");
         
         Log.d(TAG, "Authorization code: " + code);
-        Log.d(TAG, "Error: " + error);
-        Log.d(TAG, "Error description: " + errorDescription);
+        Log.d(TAG, "Error: " + err);
+        Log.d(TAG, "Error description: " + desc);
         
-        if (error != null) {
-            String errorMsg = "Authorization failed: " + error;
-            if (errorDescription != null) {
-                errorMsg += " - " + errorDescription;
+        if (err != null) {
+            String msg = "Authorization failed: " + err;
+            if (desc != null) {
+                msg += " - " + desc;
             }
-            Log.e(TAG, errorMsg);
-            callback.onError(errorMsg);
+            Log.e(TAG, msg);
+            callback.onError(msg);
             return;
         }
         
@@ -88,7 +88,8 @@ public class AuthManager {
         Log.d(TAG, "=== exchangeCodeForToken ===");
         Log.d(TAG, "Code: " + code);
         Log.d(TAG, "Client ID: " + ApiClient.getClientId());
-        Log.d(TAG, "Client Secret: " + (ApiClient.getClientSecret() != null ? "***" + ApiClient.getClientSecret().substring(Math.max(0, ApiClient.getClientSecret().length() - 4)) : "null"));
+        String secret = ApiClient.getClientSecret();
+        Log.d(TAG, "Client Secret: " + (secret != null ? "***" + secret.substring(Math.max(0, secret.length() - 4)) : "null"));
         Log.d(TAG, "Redirect URI: " + ApiClient.getRedirectUri());
         
         Call<AccessToken> call = api.getAccessToken(
@@ -103,13 +104,13 @@ public class AuthManager {
         
         call.enqueue(new Callback<AccessToken>() {
             @Override
-            public void onResponse(Call<AccessToken> call, Response<AccessToken> response) {
+            public void onResponse(Call<AccessToken> call, Response<AccessToken> res) {
                 Log.d(TAG, "=== Token Exchange Response ===");
-                Log.d(TAG, "Response code: " + response.code());
-                Log.d(TAG, "Response successful: " + response.isSuccessful());
+                Log.d(TAG, "Response code: " + res.code());
+                Log.d(TAG, "Response successful: " + res.isSuccessful());
                 
-                if (response.isSuccessful() && response.body() != null) {
-                    AccessToken token = response.body();
+                if (res.isSuccessful() && res.body() != null) {
+                    AccessToken token = res.body();
                     Log.d(TAG, "✅ Token received successfully!");
                     Log.d(TAG, "Access token: " + token.getAccessToken().substring(0, Math.min(10, token.getAccessToken().length())) + "...");
                     Log.d(TAG, "Token type: " + token.getTokenType());
@@ -119,33 +120,33 @@ public class AuthManager {
                     saveToken(token);
                     callback.onSuccess(token.getAccessToken());
                 } else {
-                    String errorMsg = "Failed to get access token: " + response.code();
+                    String msg = "Failed to get access token: " + res.code();
                     try {
-                        if (response.errorBody() != null) {
-                            String errorBody = response.errorBody().string();
-                            Log.e(TAG, "Error body: " + errorBody);
-                            errorMsg += " - " + errorBody;
+                        if (res.errorBody() != null) {
+                            String body = res.errorBody().string();
+                            Log.e(TAG, "Error body: " + body);
+                            msg += " - " + body;
                         }
                     } catch (Exception e) {
                         Log.e(TAG, "Error reading error body", e);
                     }
-                    Log.e(TAG, errorMsg);
-                    callback.onError(errorMsg);
+                    Log.e(TAG, msg);
+                    callback.onError(msg);
                 }
             }
             
             @Override
             public void onFailure(Call<AccessToken> call, Throwable t) {
-                String errorMsg = "Network error: " + t.getMessage();
-                Log.e(TAG, errorMsg, t);
-                callback.onError(errorMsg);
+                String msg = "Network error: " + t.getMessage();
+                Log.e(TAG, msg, t);
+                callback.onError(msg);
             }
         });
     }
     
     public void refreshAccessToken(RefreshCallback callback) {
-        String refreshToken = getRefreshToken();
-        if (refreshToken == null) {
+        String refresh = getRefreshToken();
+        if (refresh == null) {
             callback.onError("No refresh token available");
             return;
         }
@@ -154,18 +155,18 @@ public class AuthManager {
                 "refresh_token",
                 ApiClient.getClientId(),
                 ApiClient.getClientSecret(),
-                refreshToken
+                refresh
         );
         
         call.enqueue(new Callback<AccessToken>() {
             @Override
-            public void onResponse(Call<AccessToken> call, Response<AccessToken> response) {
-                if (response.isSuccessful() && response.body() != null) {
-                    AccessToken token = response.body();
+            public void onResponse(Call<AccessToken> call, Response<AccessToken> res) {
+                if (res.isSuccessful() && res.body() != null) {
+                    AccessToken token = res.body();
                     saveToken(token);
                     callback.onSuccess(token.getAccessToken());
                 } else {
-                    callback.onError("Failed to refresh token: " + response.code());
+                    callback.onError("Failed to refresh token: " + res.code());
                 }
             }
             
@@ -178,26 +179,26 @@ public class AuthManager {
     
     private void saveToken(AccessToken token) {
         SharedPreferences.Editor editor = prefs.edit();
-        editor.putString(KEY_ACCESS_TOKEN, token.getAccessToken());
-        editor.putString(KEY_REFRESH_TOKEN, token.getRefreshToken());
+        editor.putString(KEY_TOKEN, token.getAccessToken());
+        editor.putString(KEY_REFRESH, token.getRefreshToken());
         
-        long expiryTime = System.currentTimeMillis() + (token.getExpiresIn() * 1000);
-        editor.putLong(KEY_TOKEN_EXPIRY, expiryTime);
+        long expiry = System.currentTimeMillis() + (token.getExpiresIn() * 1000);
+        editor.putLong(KEY_EXPIRY, expiry);
         
         editor.apply();
     }
     
     public String getAccessToken() {
-        return prefs.getString(KEY_ACCESS_TOKEN, null);
+        return prefs.getString(KEY_TOKEN, null);
     }
     
     public String getRefreshToken() {
-        return prefs.getString(KEY_REFRESH_TOKEN, null);
+        return prefs.getString(KEY_REFRESH, null);
     }
     
     public boolean isTokenExpired() {
-        long expiryTime = prefs.getLong(KEY_TOKEN_EXPIRY, 0);
-        return System.currentTimeMillis() >= expiryTime;
+        long expiry = prefs.getLong(KEY_EXPIRY, 0);
+        return System.currentTimeMillis() >= expiry;
     }
     
     public boolean isLoggedIn() {
@@ -209,12 +210,12 @@ public class AuthManager {
     }
     
     public interface AuthCallback {
-        void onSuccess(String accessToken);
+        void onSuccess(String token);
         void onError(String error);
     }
     
     public interface RefreshCallback {
-        void onSuccess(String accessToken);
+        void onSuccess(String token);
         void onError(String error);
     }
 }
