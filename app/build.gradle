@@ -14,8 +14,7 @@ android {
         versionName "1.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
-        
-        // Load .env file
+  
         def envFile = rootProject.file('.env')
         if (envFile.exists()) {
             envFile.readLines().each { line ->
@@ -25,7 +24,7 @@ android {
                 }
             }
         } else {
-            // Default values if .env doesn't exist
+           
             buildConfigField "String", "SOUNDCLOUD_CLIENT_ID", "\"your_client_id_here\""
             buildConfigField "String", "SOUNDCLOUD_CLIENT_SECRET", "\"your_client_secret_here\""
             buildConfigField "String", "SOUNDCLOUD_REDIRECT_URI", "\"scplayer://callback\""
@@ -56,23 +55,19 @@ dependencies {
     implementation libs.coordinatorlayout
     implementation libs.recyclerview
     
-    // Networking
     implementation libs.retrofit
     implementation libs.retrofit.gson
     implementation libs.okhttp
     implementation libs.okhttp.logging
     implementation libs.gson
     
-    // Image loading
     implementation libs.glide
     annotationProcessor libs.glide.compiler
     
-    // Media playback
     implementation libs.media3.exoplayer
     implementation libs.media3.ui
     implementation libs.media3.session
     
-    // Lifecycle
     implementation libs.lifecycle.viewmodel
     implementation libs.lifecycle.livedata
     
