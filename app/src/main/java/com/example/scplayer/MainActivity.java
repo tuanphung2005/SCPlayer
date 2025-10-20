@@ -32,7 +32,6 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
         
         ApiClient.initialize(this);
         auth = new AuthManager(this);
@@ -42,25 +41,15 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
         
-        initializeViews();
-        setupAuth();
-        setupSearch();
+        // to home
+        navigateToHome();
     }
     
-    private void initializeViews() {
-        logout = findViewById(R.id.btnLogout);
-        input = findViewById(R.id.searchInput);
-        search = findViewById(R.id.btnSearch);
-    }
-    
-    private void setupAuth() {
-        api = ApiClient.getSoundCloudApi();
-        
-        logout.setOnClickListener(v -> {
-            auth.logout();
-            Toast.makeText(this, "Logged out", Toast.LENGTH_SHORT).show();
-            navigateToLogin();
-        });
+    private void navigateToHome() {
+        Intent intent = new Intent(this, HomeActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
+        finish();
     }
     
     private void navigateToLogin() {
@@ -68,47 +57,5 @@ public class MainActivity extends AppCompatActivity {
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(intent);
         finish();
-    }
-    
-    private void setupSearch() {
-        search.setOnClickListener(v -> {
-            String q = input.getText().toString().trim();
-            if (!q.isEmpty()) {
-                searchTracks(q);
-            } else {
-                Toast.makeText(this, "Please enter a search query", Toast.LENGTH_SHORT).show();
-            }
-        });
-    }
-    
-    private void searchTracks(String q) {
-        Call<SearchResponse> call = api.searchTracks(q, 20, 0);
-        
-        call.enqueue(new Callback<SearchResponse>() {
-            @Override
-            public void onResponse(Call<SearchResponse> call, Response<SearchResponse> res) {
-                if (res.isSuccessful() && res.body() != null) {
-                    int count = res.body().getCollection().size();
-                    runOnUiThread(() -> {
-                        if (count == 0) {
-                            Toast.makeText(MainActivity.this, "No tracks found", Toast.LENGTH_SHORT).show();
-                        } else {
-                            Toast.makeText(MainActivity.this, "Found " + count + " tracks", Toast.LENGTH_SHORT).show();
-                        }
-                    });
-                } else {
-                    runOnUiThread(() -> {
-                        Toast.makeText(MainActivity.this, "Search failed: " + res.code(), Toast.LENGTH_SHORT).show();
-                    });
-                }
-            }
-            
-            @Override
-            public void onFailure(Call<SearchResponse> call, Throwable t) {
-                runOnUiThread(() -> {
-                    Toast.makeText(MainActivity.this, "Network error: " + t.getMessage(), Toast.LENGTH_LONG).show();
-                });
-            }
-        });
     }
 }
