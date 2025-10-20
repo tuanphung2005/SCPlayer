@@ -47,9 +47,9 @@ public interface SoundCloudApi {
     @GET("users/{id}")
     Call<User> getUser(@Path("id") long id);
     
-    // tracks
+    // tracks - return array [{}]
     @GET("tracks")
-    Call<SearchResponse> searchTracks(
+    Call<List<Track>> searchTracks(
             @Query("q") String q,
             @Query("limit") int limit,
             @Query("offset") int offset

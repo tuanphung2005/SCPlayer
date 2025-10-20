@@ -13,7 +13,6 @@
         android:orientation="horizontal"
         android:padding="12dp">
 
-        <!-- Album Cover -->
         <ImageView
             android:id="@+id/trackCover"
             android:layout_width="60dp"
@@ -22,7 +21,6 @@
             android:background="#E0E0E0"
             android:contentDescription="Track cover" />
 
-        <!-- Track Info -->
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
@@ -31,7 +29,6 @@
             android:orientation="vertical"
             android:layout_gravity="center_vertical">
 
-            <!-- Track Title -->
             <TextView
                 android:id="@+id/trackTitle"
                 android:layout_width="match_parent"
@@ -43,7 +40,6 @@
                 android:maxLines="1"
                 android:ellipsize="end" />
 
-            <!-- Artist Name -->
             <TextView
                 android:id="@+id/artistName"
                 android:layout_width="match_parent"
@@ -55,7 +51,6 @@
                 android:maxLines="1"
                 android:ellipsize="end" />
 
-            <!-- Duration -->
             <TextView
                 android:id="@+id/trackDuration"
                 android:layout_width="wrap_content"

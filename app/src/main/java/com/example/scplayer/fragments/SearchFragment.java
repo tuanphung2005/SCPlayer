@@ -35,17 +35,17 @@ import retrofit2.Response;
 
 public class SearchFragment extends Fragment implements SearchResultAdapter.OnTrackClickListener {
 
-    private EditText searchInput;
-    private ImageButton btnClearSearch;
-    private RecyclerView recyclerViewResults;
-    private LinearLayout emptyState;
-    private ProgressBar progressBar;
+    private EditText input;
+    private ImageButton clear;
+    private RecyclerView results;
+    private LinearLayout empty;
+    private ProgressBar loading;
     private SearchResultAdapter adapter;
     private SoundCloudApi api;
 
-    private Handler searchHandler = new Handler(Looper.getMainLooper());
-    private Runnable searchRunnable;
-    private static final int SEARCH_DELAY = 500;
+    private Handler handler = new Handler(Looper.getMainLooper());
+    private Runnable runnable;
+    private static final int DELAY = 500;
 
     @Nullable
     @Override
@@ -62,38 +62,38 @@ public class SearchFragment extends Fragment implements SearchResultAdapter.OnTr
     }
 
     private void initializeViews(View view) {
-        searchInput = view.findViewById(R.id.searchInput);
-        btnClearSearch = view.findViewById(R.id.btnClearSearch);
-        recyclerViewResults = view.findViewById(R.id.recyclerViewResults);
-        emptyState = view.findViewById(R.id.emptyState);
-        progressBar = view.findViewById(R.id.progressBar);
+        input = view.findViewById(R.id.searchInput);
+        clear = view.findViewById(R.id.btnClearSearch);
+        results = view.findViewById(R.id.recyclerViewResults);
+        empty = view.findViewById(R.id.emptyState);
+        loading = view.findViewById(R.id.progressBar);
 
         adapter = new SearchResultAdapter(this);
-        recyclerViewResults.setLayoutManager(new LinearLayoutManager(getContext()));
-        recyclerViewResults.setAdapter(adapter);
+        results.setLayoutManager(new LinearLayoutManager(getContext()));
+        results.setAdapter(adapter);
 
         api = ApiClient.getSoundCloudApi();
     }
 
     private void setupSearch() {
-        searchInput.addTextChangedListener(new TextWatcher() {
+        input.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
-                btnClearSearch.setVisibility(s.length() > 0 ? View.VISIBLE : View.GONE);
+                clear.setVisibility(s.length() > 0 ? View.VISIBLE : View.GONE);
 
-                if (searchRunnable != null) {
-                    searchHandler.removeCallbacks(searchRunnable);
+                if (runnable != null) {
+                    handler.removeCallbacks(runnable);
                 }
 
                 if (s.length() > 0) {
-                    searchRunnable = () -> performSearch(s.toString());
-                    searchHandler.postDelayed(searchRunnable, SEARCH_DELAY);
+                    runnable = () -> performSearch(s.toString());
+                    handler.postDelayed(runnable, DELAY);
                 } else {
                     adapter.clearTracks();
-                    showEmptyState(true);
+                    showEmpty(true);
                 }
             }
 
@@ -101,50 +101,50 @@ public class SearchFragment extends Fragment implements SearchResultAdapter.OnTr
             public void afterTextChanged(Editable s) {}
         });
 
-        btnClearSearch.setOnClickListener(v -> {
-            searchInput.setText("");
+        clear.setOnClickListener(v -> {
+            input.setText("");
             adapter.clearTracks();
-            showEmptyState(true);
+            showEmpty(true);
         });
     }
 
-    private void performSearch(String query) {
+    private void performSearch(String q) {
         showLoading(true);
-        showEmptyState(false);
+        showEmpty(false);
 
-        Call<SearchResponse> call = api.searchTracks(query.trim(), 20, 0);
+        Call<List<Track>> call = api.searchTracks(q.trim(), 20, 0);
 
-        call.enqueue(new Callback<SearchResponse>() {
+        call.enqueue(new Callback<List<Track>>() {
             @Override
-            public void onResponse(Call<SearchResponse> call, Response<SearchResponse> response) {
+            public void onResponse(Call<List<Track>> call, Response<List<Track>> res) {
                 showLoading(false);
 
-                if (response.isSuccessful() && response.body() != null) {
-                    List<Track> tracks = response.body().getCollection();
+                if (res.isSuccessful() && res.body() != null) {
+                    List<Track> tracks = res.body();
 
-                    if (tracks != null && !tracks.isEmpty()) {
+                    if (!tracks.isEmpty()) {
                         adapter.setTracks(tracks);
-                        showEmptyState(false);
+                        showEmpty(false);
                     } else {
                         adapter.clearTracks();
-                        showEmptyState(true);
+                        showEmpty(true);
                         if (getContext() != null) {
                             Toast.makeText(getContext(), "No tracks found", Toast.LENGTH_SHORT).show();
                         }
                     }
                 } else {
                     adapter.clearTracks();
-                    showEmptyState(true);
+                    showEmpty(true);
                     if (getContext() != null) {
-                        Toast.makeText(getContext(), "Search failed: " + response.code(), Toast.LENGTH_SHORT).show();
+                        Toast.makeText(getContext(), "Search failed: " + res.code(), Toast.LENGTH_SHORT).show();
                     }
                 }
             }
 
             @Override
-            public void onFailure(Call<SearchResponse> call, Throwable t) {
+            public void onFailure(Call<List<Track>> call, Throwable t) {
                 showLoading(false);
-                showEmptyState(true);
+                showEmpty(true);
                 if (getContext() != null) {
                     Toast.makeText(getContext(), "Network error: " + t.getMessage(), Toast.LENGTH_LONG).show();
                 }
@@ -153,14 +153,14 @@ public class SearchFragment extends Fragment implements SearchResultAdapter.OnTr
     }
 
     private void showLoading(boolean show) {
-        if (progressBar != null) {
-            progressBar.setVisibility(show ? View.VISIBLE : View.GONE);
+        if (loading != null) {
+            loading.setVisibility(show ? View.VISIBLE : View.GONE);
         }
     }
 
-    private void showEmptyState(boolean show) {
-        if (emptyState != null) {
-            emptyState.setVisibility(show ? View.VISIBLE : View.GONE);
+    private void showEmpty(boolean show) {
+        if (empty != null) {
+            empty.setVisibility(show ? View.VISIBLE : View.GONE);
         }
     }
 
@@ -174,8 +174,8 @@ public class SearchFragment extends Fragment implements SearchResultAdapter.OnTr
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        if (searchRunnable != null) {
-            searchHandler.removeCallbacks(searchRunnable);
+        if (runnable != null) {
+            handler.removeCallbacks(runnable);
         }
     }
 }
