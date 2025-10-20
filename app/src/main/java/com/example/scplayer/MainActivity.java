@@ -41,7 +41,7 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
         
-        // Redirect to HomeActivity
+        // to home
         navigateToHome();
     }
     

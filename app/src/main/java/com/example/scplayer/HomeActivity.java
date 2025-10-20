@@ -1,69 +1,79 @@
 package com.example.scplayer;
 
-import android.content.Intent;
 import android.os.Bundle;
-import android.widget.Button;
-import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentTransaction;
 
-import com.example.scplayer.auth.AuthManager;
+import com.example.scplayer.fragments.HomeFragment;
+import com.example.scplayer.fragments.LibraryFragment;
+import com.example.scplayer.fragments.SearchFragment;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 public class HomeActivity extends AppCompatActivity {
 
-    private AuthManager authManager;
+    private FragmentManager fm;
+    private Fragment home;
+    private Fragment search;
+    private Fragment library;
+    private Fragment active;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home);
 
-        authManager = new AuthManager(this);
+        fm = getSupportFragmentManager();
+        
+        // fragments
+        home = new HomeFragment();
+        search = new SearchFragment();
+        library = new LibraryFragment();
 
-        TextView titleText = findViewById(R.id.titleText);
-        titleText.setText("Home");
-
-        Button btnLogout = findViewById(R.id.btnLogout);
-        btnLogout.setOnClickListener(v -> {
-            authManager.logout();
-            Toast.makeText(this, "Logged out", Toast.LENGTH_SHORT).show();
-            navigateToLogin();
-        });
+        fm.beginTransaction()
+            .add(R.id.fragmentContainer, home, "home")
+            .add(R.id.fragmentContainer, search, "search")
+            .add(R.id.fragmentContainer, library, "library")
+            .hide(search)
+            .hide(library)
+            .commit();
+        
+        active = home;
 
         setupBottomNavigation();
     }
 
-    private void navigateToLogin() {
-        Intent intent = new Intent(this, LoginActivity.class);
-        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-        startActivity(intent);
-        finish();
-    }
-
     private void setupBottomNavigation() {
-        BottomNavigationView bottomNav = findViewById(R.id.bottomNavigation);
-        bottomNav.setSelectedItemId(R.id.nav_home);
+        BottomNavigationView nav = findViewById(R.id.bottomNavigation);
+        nav.setSelectedItemId(R.id.nav_home);
 
-        bottomNav.setOnItemSelectedListener(item -> {
-            int itemId = item.getItemId();
+        nav.setOnItemSelectedListener(item -> {
+            int id = item.getItemId();
             
-            if (itemId == R.id.nav_home) {
+            if (id == R.id.nav_home) {
+                switchFragment(home);
                 return true;
-            } else if (itemId == R.id.nav_library) {
-                startActivity(new Intent(this, LibraryActivity.class));
-                overridePendingTransition(0, 0);
-                finish();
+            } else if (id == R.id.nav_search) {
+                switchFragment(search);
                 return true;
-            } else if (itemId == R.id.nav_search) {
-                startActivity(new Intent(this, SearchActivity.class));
-                overridePendingTransition(0, 0);
-                finish();
+            } else if (id == R.id.nav_library) {
+                switchFragment(library);
                 return true;
             }
             
             return false;
         });
+    }
+    
+    private void switchFragment(Fragment fragment) {
+        if (fragment != active) {
+            fm.beginTransaction()
+                .hide(active)
+                .show(fragment)
+                .commit();
+            active = fragment;
+        }
     }
 }

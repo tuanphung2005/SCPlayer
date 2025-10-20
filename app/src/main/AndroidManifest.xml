@@ -45,14 +45,6 @@
         <activity
             android:name=".HomeActivity"
             android:exported="false" />
-        
-        <activity
-            android:name=".LibraryActivity"
-            android:exported="false" />
-        
-        <activity
-            android:name=".SearchActivity"
-            android:exported="false" />
     </application>
 
 </manifest>
