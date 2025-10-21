@@ -7,10 +7,9 @@
     app:cardCornerRadius="12dp"
     app:cardElevation="2dp">
 
-    <LinearLayout
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
         android:padding="12dp">
 
         <ImageView
@@ -19,49 +18,67 @@
             android:layout_height="60dp"
             android:scaleType="centerCrop"
             android:background="#E0E0E0"
-            android:contentDescription="Track cover" />
+            android:contentDescription="Track cover"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
-        <LinearLayout
+        <TextView
+            android:id="@+id/trackTitle"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
             android:layout_marginStart="12dp"
-            android:orientation="vertical"
-            android:layout_gravity="center_vertical">
+            android:layout_marginEnd="48dp"
+            android:text="Track Title"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="#000000"
+            android:maxLines="1"
+            android:ellipsize="end"
+            app:layout_constraintStart_toEndOf="@id/trackCover"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="@id/trackCover" />
 
-            <TextView
-                android:id="@+id/trackTitle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Track Title"
-                android:textSize="16sp"
-                android:textStyle="bold"
-                android:textColor="#000000"
-                android:maxLines="1"
-                android:ellipsize="end" />
+        <TextView
+            android:id="@+id/artistName"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:layout_marginTop="4dp"
+            android:layout_marginEnd="48dp"
+            android:text="Artist Name"
+            android:textSize="14sp"
+            android:textColor="#666666"
+            android:maxLines="1"
+            android:ellipsize="end"
+            app:layout_constraintStart_toEndOf="@id/trackCover"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/trackTitle" />
 
-            <TextView
-                android:id="@+id/artistName"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:text="Artist Name"
-                android:textSize="14sp"
-                android:textColor="#666666"
-                android:maxLines="1"
-                android:ellipsize="end" />
+        <TextView
+            android:id="@+id/trackDuration"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:layout_marginTop="4dp"
+            android:text="0:00"
+            android:textSize="12sp"
+            android:textColor="#999999"
+            app:layout_constraintStart_toEndOf="@id/trackCover"
+            app:layout_constraintTop_toBottomOf="@id/artistName"
+            app:layout_constraintBottom_toBottomOf="@id/trackCover" />
 
-            <TextView
-                android:id="@+id/trackDuration"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:text="0:00"
-                android:textSize="12sp"
-                android:textColor="#999999" />
+        <ImageButton
+            android:id="@+id/btnAddSong"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:src="@android:drawable/ic_input_add"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:scaleType="fitCenter"
+            android:tint="#000000"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            android:contentDescription="Add song to playlist" />
 
-        </LinearLayout>
-
-    </LinearLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
 </com.google.android.material.card.MaterialCardView>
