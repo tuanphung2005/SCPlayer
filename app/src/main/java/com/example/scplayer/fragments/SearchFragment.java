@@ -5,6 +5,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -12,7 +13,6 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -128,16 +128,12 @@ public class SearchFragment extends Fragment implements SearchResultAdapter.OnTr
                     } else {
                         adapter.clearTracks();
                         showEmpty(true);
-                        if (getContext() != null) {
-                            Toast.makeText(getContext(), "No tracks found", Toast.LENGTH_SHORT).show();
-                        }
+                        Log.d("SearchFragment", "No tracks found");
                     }
                 } else {
                     adapter.clearTracks();
                     showEmpty(true);
-                    if (getContext() != null) {
-                        Toast.makeText(getContext(), "Search failed: " + res.code(), Toast.LENGTH_SHORT).show();
-                    }
+                    Log.d("SearchFragment", "Search failed: " + res.code());
                 }
             }
 
@@ -145,37 +141,27 @@ public class SearchFragment extends Fragment implements SearchResultAdapter.OnTr
             public void onFailure(Call<List<Track>> call, Throwable t) {
                 showLoading(false);
                 showEmpty(true);
-                if (getContext() != null) {
-                    Toast.makeText(getContext(), "Network error: " + t.getMessage(), Toast.LENGTH_LONG).show();
-                }
+                Log.d("SearchFragment", "Network error: " + t.getMessage());
             }
         });
     }
 
     private void showLoading(boolean show) {
-        if (loading != null) {
-            loading.setVisibility(show ? View.VISIBLE : View.GONE);
-        }
+        loading.setVisibility(show ? View.VISIBLE : View.GONE);
     }
 
     private void showEmpty(boolean show) {
-        if (empty != null) {
-            empty.setVisibility(show ? View.VISIBLE : View.GONE);
-        }
+        empty.setVisibility(show ? View.VISIBLE : View.GONE);
     }
 
     @Override
     public void onTrackClick(Track track, int position) {
-        if (getContext() != null) {
-            Toast.makeText(getContext(), "Playing: " + track.getTitle(), Toast.LENGTH_SHORT).show();
-        }
+        Log.d("SearchFragment", "Playing: " + track.getTitle());
     }
 
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        if (runnable != null) {
-            handler.removeCallbacks(runnable);
-        }
+        handler.removeCallbacks(runnable);
     }
 }
