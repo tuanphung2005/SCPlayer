@@ -69,16 +69,13 @@ public class PlaylistAdapter extends RecyclerView.Adapter<PlaylistAdapter.Playli
             title.setText(playlist.getTitle());
             trackCount.setText(playlist.getTrackCount() + " tracks");
 
-            // Load artwork for all playlists (including Liked Songs)
             artwork.setScaleType(android.widget.ImageView.ScaleType.CENTER_CROP);
-            artwork.setBackgroundColor(0x00000000); // Transparent
+            artwork.setBackgroundColor(0x00000000);
             artwork.setPadding(0, 0, 0, 0);
             
             String artworkUrl = playlist.getArtworkUrl();
             if (artworkUrl != null && !artworkUrl.isEmpty()) {
-                // Replace 'large' with 't300x300' for playlist thumbnails
                 artworkUrl = artworkUrl.replace("large", "t300x300");
-                // Also handle other size formats
                 artworkUrl = artworkUrl.replace("t500x500", "t300x300");
                 artworkUrl = artworkUrl.replace("t250x250", "t300x300");
                 

@@ -28,13 +28,11 @@ import retrofit2.Response;
 
 public class LibraryFragment extends Fragment {
 
-    private RecyclerView playlistsRecycler;
+    private RecyclerView recycler;
     private View empty;
-    
-    private PlaylistAdapter playlistsAdapter;
+    private PlaylistAdapter adapter;
     private SoundCloudApi api;
-    
-    private List<Track> likedTracks = new ArrayList<>();
+    private List<Track> liked = new ArrayList<>();
 
     @Nullable
     @Override
@@ -52,41 +50,37 @@ public class LibraryFragment extends Fragment {
     }
 
     private void initializeViews(View view) {
-        playlistsRecycler = view.findViewById(R.id.playlistsRecycler);
+        recycler = view.findViewById(R.id.playlistsRecycler);
         empty = view.findViewById(R.id.empty);
-        
         api = ApiClient.getSoundCloudApi();
     }
 
     private void setupRecyclers() {
-        playlistsAdapter = new PlaylistAdapter(playlist -> {
-            if (playlist.getId() == -1) {
-                Log.d("LibraryFragment", "Opening Liked Songs (" + likedTracks.size() + " tracks)");
+        adapter = new PlaylistAdapter(p -> {
+            if (p.getId() == -1) {
+                Log.d("LibraryFragment", "Opening Liked Songs (" + liked.size() + " tracks)");
             } else {
-                Log.d("LibraryFragment", "Opening: " + playlist.getTitle());
+                Log.d("LibraryFragment", "Opening: " + p.getTitle());
             }
         });
-        playlistsRecycler.setLayoutManager(new GridLayoutManager(getContext(), 2));
-        playlistsRecycler.setAdapter(playlistsAdapter);
+        recycler.setLayoutManager(new GridLayoutManager(getContext(), 2));
+        recycler.setAdapter(adapter);
     }
 
     private void loadLibraryData() {
         showEmpty(false);
-
         loadLikedTracks();
         loadPlaylists();
     }
 
     private void loadLikedTracks() {
-        Call<List<Track>> call = api.getLikedTracks(50, 0);
-        
-        call.enqueue(new Callback<List<Track>>() {
+        api.getLikedTracks(50, 0).enqueue(new Callback<List<Track>>() {
             @Override
             public void onResponse(Call<List<Track>> call, Response<List<Track>> res) {
                 if (res.isSuccessful() && res.body() != null) {
-                    likedTracks = res.body();
-                    if (!likedTracks.isEmpty()) {
-                        playlistsAdapter.setPlaylists(List.of(createLikedPlaylist()));
+                    liked = res.body();
+                    if (!liked.isEmpty()) {
+                        adapter.setPlaylists(List.of(createLiked()));
                     }
                     loadPlaylists();
                 } else {
@@ -102,13 +96,11 @@ public class LibraryFragment extends Fragment {
     }
 
     private void loadPlaylists() {
-        Call<List<Playlist>> call = api.getLikedPlaylistsV2(50, 0);
-        
-        call.enqueue(new Callback<List<Playlist>>() {
+        api.getLikedPlaylistsV2(50, 0).enqueue(new Callback<List<Playlist>>() {
             @Override
             public void onResponse(Call<List<Playlist>> call, Response<List<Playlist>> res) {
                 if (res.isSuccessful() && res.body() != null) {
-                    fetchPlaylistArtwork(res.body(), 0);
+                    fetchArtwork(res.body(), 0);
                 } else {
                     Log.d("LibraryFragment", "Failed to load playlists: " + res.code());
                     checkIfEmpty();
@@ -123,62 +115,62 @@ public class LibraryFragment extends Fragment {
         });
     }
     
-    private void fetchPlaylistArtwork(List<Playlist> playlists, int index) {
-        if (index >= playlists.size()) {
-            displayPlaylists(playlists);
+    private void fetchArtwork(List<Playlist> playlists, int i) {
+        if (i >= playlists.size()) {
+            display(playlists);
             return;
         }
         
-        Playlist playlist = playlists.get(index);
+        Playlist p = playlists.get(i);
 
-        if (playlist.getArtworkUrl() != null) {
-            fetchPlaylistArtwork(playlists, index + 1);
+        if (p.getArtworkUrl() != null) {
+            fetchArtwork(playlists, i + 1);
             return;
         }
 
-        String urn = playlist.getUrn();
+        String urn = p.getUrn();
         if (urn != null) {
             api.getPlaylistTracks(urn, 1).enqueue(new Callback<List<Track>>() {
                 @Override
                 public void onResponse(Call<List<Track>> call, Response<List<Track>> res) {
                     if (res.isSuccessful() && res.body() != null && !res.body().isEmpty()) {
-                        playlist.setArtworkUrl(res.body().get(0).getArtworkUrl());
+                        p.setArtworkUrl(res.body().get(0).getArtworkUrl());
                     }
-                    fetchPlaylistArtwork(playlists, index + 1);
+                    fetchArtwork(playlists, i + 1);
                 }
 
                 @Override
                 public void onFailure(Call<List<Track>> call, Throwable t) {
-                    fetchPlaylistArtwork(playlists, index + 1);
+                    fetchArtwork(playlists, i + 1);
                 }
             });
         } else {
-            fetchPlaylistArtwork(playlists, index + 1);
+            fetchArtwork(playlists, i + 1);
         }
     }
     
-    private void displayPlaylists(List<Playlist> userPlaylists) {
-        List<Playlist> allPlaylists = new ArrayList<>();
+    private void display(List<Playlist> user) {
+        List<Playlist> all = new ArrayList<>();
         
-        if (playlistsAdapter.getItemCount() > 0) {
-            allPlaylists.add(createLikedSongsPlaylist());
+        if (adapter.getItemCount() > 0) {
+            all.add(createLiked());
         }
         
-        allPlaylists.addAll(userPlaylists);
-        playlistsAdapter.setPlaylists(allPlaylists);
+        all.addAll(user);
+        adapter.setPlaylists(all);
         
-        if (allPlaylists.isEmpty()) {
+        if (all.isEmpty()) {
             showEmpty(true);
         }
     }
     
-    private Playlist createLikedPlaylist() {
-        Playlist likedSongs = new Playlist();
-        likedSongs.setId(-1);
-        likedSongs.setTitle("Liked Songs");
-        likedSongs.setTrackCount(likedTracks.size());
-        likedSongs.setArtworkUrl(likedTracks.get(0).getArtworkUrl());
-        return likedSongs;
+    private Playlist createLiked() {
+        Playlist p = new Playlist();
+        p.setId(-1);
+        p.setTitle("Liked Songs");
+        p.setTrackCount(liked.size());
+        p.setArtworkUrl(liked.get(0).getArtworkUrl());
+        return p;
     }
 
     private void showEmpty(boolean show) {
@@ -186,6 +178,6 @@ public class LibraryFragment extends Fragment {
     }
 
     private void checkIfEmpty() {
-        showEmpty(playlistsAdapter.getItemCount() == 0);
+        showEmpty(adapter.getItemCount() == 0);
     }
 }
