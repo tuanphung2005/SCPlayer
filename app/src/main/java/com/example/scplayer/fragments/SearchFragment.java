@@ -24,7 +24,6 @@ import com.example.scplayer.R;
 import com.example.scplayer.adapters.SearchResultAdapter;
 import com.example.scplayer.api.ApiClient;
 import com.example.scplayer.api.SoundCloudApi;
-import com.example.scplayer.models.SearchResponse;
 import com.example.scplayer.models.Track;
 
 import java.util.List;

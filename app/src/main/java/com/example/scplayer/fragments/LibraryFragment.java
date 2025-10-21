@@ -1,10 +1,10 @@
 package com.example.scplayer.fragments;
 
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -61,14 +61,12 @@ public class LibraryFragment extends Fragment {
     private void setupRecyclers() {
         playlistsAdapter = new PlaylistAdapter(playlist -> {
             if (playlist.getId() == -1) {
-                // TODO: Open liked songs fragment
-                Toast.makeText(getContext(), "Opening Liked Songs (" + likedTracks.size() + " tracks)", Toast.LENGTH_SHORT).show();
+                Log.d("LibraryFragment", "Opening Liked Songs (" + likedTracks.size() + " tracks)");
             } else {
-                // TODO: Open playlist detail fragment
-                Toast.makeText(getContext(), "Opening: " + playlist.getTitle(), Toast.LENGTH_SHORT).show();
+                Log.d("LibraryFragment", "Opening: " + playlist.getTitle());
             }
         });
-        playlistsRecycler.setLayoutManager(new GridLayoutManager(getContext(), 2)); // 2 columns
+        playlistsRecycler.setLayoutManager(new GridLayoutManager(getContext(), 2));
         playlistsRecycler.setAdapter(playlistsAdapter);
     }
 
@@ -87,17 +85,8 @@ public class LibraryFragment extends Fragment {
             public void onResponse(Call<List<Track>> call, Response<List<Track>> res) {
                 if (res.isSuccessful() && res.body() != null) {
                     likedTracks = res.body();
-
                     if (!likedTracks.isEmpty()) {
-                        Playlist likedSongsPlaylist = new Playlist();
-                        likedSongsPlaylist.setId(-1);
-                        likedSongsPlaylist.setTitle("Liked Songs");
-                        likedSongsPlaylist.setTrackCount(likedTracks.size());
-                        likedSongsPlaylist.setArtworkUrl(likedTracks.get(0).getArtworkUrl());
-                        
-                        List<Playlist> allPlaylists = new ArrayList<>();
-                        allPlaylists.add(likedSongsPlaylist);
-                        playlistsAdapter.setPlaylists(allPlaylists);
+                        playlistsAdapter.setPlaylists(List.of(createLikedPlaylist()));
                     }
                     loadPlaylists();
                 } else {
@@ -121,14 +110,14 @@ public class LibraryFragment extends Fragment {
                 if (res.isSuccessful() && res.body() != null) {
                     fetchPlaylistArtwork(res.body(), 0);
                 } else {
-                    Toast.makeText(getContext(), "Failed to load playlists", Toast.LENGTH_SHORT).show();
+                    Log.d("LibraryFragment", "Failed to load playlists: " + res.code());
                     checkIfEmpty();
                 }
             }
 
             @Override
             public void onFailure(Call<List<Playlist>> call, Throwable t) {
-                Toast.makeText(getContext(), "Error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+                Log.d("LibraryFragment", "Error: " + t.getMessage());
                 checkIfEmpty();
             }
         });
@@ -172,12 +161,7 @@ public class LibraryFragment extends Fragment {
         List<Playlist> allPlaylists = new ArrayList<>();
         
         if (playlistsAdapter.getItemCount() > 0) {
-            Playlist likedSongs = new Playlist();
-            likedSongs.setId(-1);
-            likedSongs.setTitle("Liked Songs");
-            likedSongs.setTrackCount(likedTracks.size());
-            likedSongs.setArtworkUrl(likedTracks.get(0).getArtworkUrl());
-            allPlaylists.add(likedSongs);
+            allPlaylists.add(createLikedSongsPlaylist());
         }
         
         allPlaylists.addAll(userPlaylists);
@@ -186,6 +170,15 @@ public class LibraryFragment extends Fragment {
         if (allPlaylists.isEmpty()) {
             showEmpty(true);
         }
+    }
+    
+    private Playlist createLikedPlaylist() {
+        Playlist likedSongs = new Playlist();
+        likedSongs.setId(-1);
+        likedSongs.setTitle("Liked Songs");
+        likedSongs.setTrackCount(likedTracks.size());
+        likedSongs.setArtworkUrl(likedTracks.get(0).getArtworkUrl());
+        return likedSongs;
     }
 
     private void showEmpty(boolean show) {
