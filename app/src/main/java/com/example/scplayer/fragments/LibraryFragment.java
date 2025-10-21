@@ -60,7 +60,7 @@ public class LibraryFragment extends Fragment {
             if (p.getId() == -1) {
                 Log.d("LibraryFragment", "Opening Liked Songs (" + liked.size() + " tracks)");
             } else {
-                Log.d("LibraryFragment", "Opening: " + p.getTitle());
+                Log.d("LibraryFragment", "Opening: " + p.getTitle() + " (" + p.getTrackCount() + " tracks)");
             }
         });
         recycler.setLayoutManager(new GridLayoutManager(getContext(), 2));
