@@ -45,10 +45,10 @@
                 android:id="@+id/btnClearSearch"
                 android:layout_width="40dp"
                 android:layout_height="40dp"
-                android:background="@drawable/bg_clear_button"
+                android:background="@null"
                 android:contentDescription="Clear search"
                 android:padding="10dp"
-                android:src="@android:drawable/ic_menu_close_clear_cancel"
+                android:src="@drawable/ic_clear"
                 android:visibility="gone" />
 
         </LinearLayout>
