@@ -32,8 +32,14 @@ public class MiniPlayer implements PlaybackService.PlaybackListener {
             playbackService.setPlaybackListener(MiniPlayer.this);
             serviceBound = true;
             
-            if (currentTrack != null) {
-                playbackService.playTrack(currentTrack);
+            boolean serviceIsPlaying = playbackService.isPlaying();
+            if (isPlaying != serviceIsPlaying) {
+                isPlaying = serviceIsPlaying;
+                notifyPlaybackStateChanged();
+            }
+            
+            if (currentTrack != null && !serviceIsPlaying) {
+                notifyPlaybackStateChanged();
             }
         }
 
@@ -41,6 +47,8 @@ public class MiniPlayer implements PlaybackService.PlaybackListener {
         public void onServiceDisconnected(ComponentName name) {
             serviceBound = false;
             playbackService = null;
+            isPlaying = false;
+            notifyPlaybackStateChanged();
         }
     };
 

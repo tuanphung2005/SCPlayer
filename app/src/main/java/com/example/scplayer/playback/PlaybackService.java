@@ -6,6 +6,7 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
+import android.content.pm.ServiceInfo;
 import android.os.Binder;
 import android.os.Build;
 import android.os.IBinder;
@@ -13,6 +14,7 @@ import android.util.Log;
 
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
+import androidx.core.app.ServiceCompat;
 import androidx.media3.common.MediaItem;
 import androidx.media3.common.PlaybackException;
 import androidx.media3.common.Player;
@@ -76,26 +78,52 @@ public class PlaybackService extends Service {
         });
     }
 
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        if (intent != null && "ACTION_STOP".equals(intent.getAction())) {
+            Log.d(TAG, "Notification dismissed - stopping playback");
+            pause();
+            if (listener != null) {
+                listener.onPlaybackStateChanged(false);
+            }
+            stopForeground(true);
+            stopSelf();
+            return START_NOT_STICKY;
+        }
+        return START_STICKY;
+    }
+
     private void createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationChannel channel = new NotificationChannel(
                     CHANNEL_ID,
                     "Music Playback",
-                    NotificationManager.IMPORTANCE_LOW
+                    NotificationManager.IMPORTANCE_DEFAULT
             );
             channel.setDescription("Shows currently playing music");
-            channel.setShowBadge(false);
+            channel.setShowBadge(true);
+            channel.enableLights(false);
+            channel.enableVibration(false);
+            channel.setSound(null, null);
             
             NotificationManager manager = getSystemService(NotificationManager.class);
             if (manager != null) {
                 manager.createNotificationChannel(channel);
+                Log.d(TAG, "Notification channel created");
             }
         }
     }
 
     private void startForeground() {
         Notification notification = buildNotification();
-        startForeground(NOTIFICATION_ID, notification);
+        
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            startForeground(NOTIFICATION_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK);
+        } else {
+            startForeground(NOTIFICATION_ID, notification);
+        }
+        
+        Log.d(TAG, "Started foreground service with notification");
     }
 
     private void updateNotification() {
@@ -104,14 +132,22 @@ public class PlaybackService extends Service {
             NotificationManager manager = getSystemService(NotificationManager.class);
             if (manager != null) {
                 manager.notify(NOTIFICATION_ID, notification);
+                Log.d(TAG, "Notification updated");
             }
         }
     }
 
     private Notification buildNotification() {
         Intent intent = new Intent(this, HomeActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
         PendingIntent pendingIntent = PendingIntent.getActivity(
-                this, 0, intent, PendingIntent.FLAG_IMMUTABLE
+                this, 0, intent, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT
+        );
+
+        Intent deleteIntent = new Intent(this, PlaybackService.class);
+        deleteIntent.setAction("ACTION_STOP");
+        PendingIntent deletePendingIntent = PendingIntent.getService(
+                this, 1, deleteIntent, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT
         );
 
         String title = currentTrack != null ? currentTrack.getTitle() : "No track";
@@ -119,15 +155,21 @@ public class PlaybackService extends Service {
                 ? currentTrack.getUser().getUsername() 
                 : "Unknown Artist";
 
-        return new NotificationCompat.Builder(this, CHANNEL_ID)
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CHANNEL_ID)
                 .setContentTitle(title)
                 .setContentText(artist)
                 .setSmallIcon(R.drawable.ic_play)
                 .setContentIntent(pendingIntent)
-                .setOngoing(true)
+                .setDeleteIntent(deletePendingIntent)
+                .setOngoing(false)
                 .setSilent(true)
                 .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-                .build();
+                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                .setCategory(NotificationCompat.CATEGORY_SERVICE);
+
+        Log.d(TAG, "Building notification for: " + title + " by " + artist);
+        
+        return builder.build();
     }
 
     public void playTrack(Track track) {
