@@ -1,9 +1,10 @@
 package com.example.scplayer.models;
 
 import com.google.gson.annotations.SerializedName;
+import java.io.Serializable;
 import java.util.List;
 
-public class Playlist {
+public class Playlist implements Serializable {
     @SerializedName("id")
     private long id;
     

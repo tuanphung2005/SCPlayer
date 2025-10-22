@@ -48,7 +48,7 @@
                 android:background="@null"
                 android:contentDescription="Clear search"
                 android:padding="10dp"
-                android:src="@drawable/ic_clear"
+                android:src="@android:drawable/ic_menu_close_clear_cancel"
                 android:visibility="gone" />
 
         </LinearLayout>

@@ -12,7 +12,6 @@ import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
-import android.widget.ProgressBar;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -38,7 +37,6 @@ public class SearchFragment extends Fragment implements SearchResultAdapter.OnTr
     private ImageButton clear;
     private RecyclerView results;
     private LinearLayout empty;
-    private ProgressBar loading;
     private SearchResultAdapter adapter;
     private SoundCloudApi api;
 
@@ -65,7 +63,6 @@ public class SearchFragment extends Fragment implements SearchResultAdapter.OnTr
         clear = view.findViewById(R.id.btnClearSearch);
         results = view.findViewById(R.id.recyclerViewResults);
         empty = view.findViewById(R.id.emptyState);
-        loading = view.findViewById(R.id.progressBar);
 
         adapter = new SearchResultAdapter(this);
         results.setLayoutManager(new LinearLayoutManager(getContext()));
@@ -108,7 +105,6 @@ public class SearchFragment extends Fragment implements SearchResultAdapter.OnTr
     }
 
     private void performSearch(String q) {
-        showLoading(true);
         showEmpty(false);
 
         Call<List<Track>> call = api.searchTracks(q.trim(), 20, 0);
@@ -116,8 +112,6 @@ public class SearchFragment extends Fragment implements SearchResultAdapter.OnTr
         call.enqueue(new Callback<List<Track>>() {
             @Override
             public void onResponse(Call<List<Track>> call, Response<List<Track>> res) {
-                showLoading(false);
-
                 if (res.isSuccessful() && res.body() != null) {
                     List<Track> tracks = res.body();
 
@@ -138,15 +132,10 @@ public class SearchFragment extends Fragment implements SearchResultAdapter.OnTr
 
             @Override
             public void onFailure(Call<List<Track>> call, Throwable t) {
-                showLoading(false);
                 showEmpty(true);
                 Log.d("SearchFragment", "Network error: " + t.getMessage());
             }
         });
-    }
-
-    private void showLoading(boolean show) {
-        loading.setVisibility(show ? View.VISIBLE : View.GONE);
     }
 
     private void showEmpty(boolean show) {

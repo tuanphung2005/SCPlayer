@@ -58,13 +58,22 @@ public class LibraryFragment extends Fragment {
     private void setupRecyclers() {
         adapter = new PlaylistAdapter(p -> {
             if (p.getId() == -1) {
-                Log.d("LibraryFragment", "Opening Liked Songs (" + liked.size() + " tracks)");
+                openPlaylist(p, liked);
             } else {
-                Log.d("LibraryFragment", "Opening: " + p.getTitle() + " (" + p.getTrackCount() + " tracks)");
+                openPlaylist(p, null);
             }
         });
         recycler.setLayoutManager(new GridLayoutManager(getContext(), 2));
         recycler.setAdapter(adapter);
+    }
+    
+    private void openPlaylist(Playlist p, List<Track> tracks) {
+        PlaylistDetailFragment fragment = PlaylistDetailFragment.newInstance(p, tracks);
+        getActivity().getSupportFragmentManager()
+                .beginTransaction()
+                .replace(R.id.fragmentContainer, fragment)
+                .addToBackStack(null)
+                .commit();
     }
 
     private void loadLibraryData() {
@@ -74,7 +83,7 @@ public class LibraryFragment extends Fragment {
     }
 
     private void loadLikedTracks() {
-        api.getLikedTracks(50, 0).enqueue(new Callback<List<Track>>() {
+        api.getLikedTracks(500, 0).enqueue(new Callback<List<Track>>() {
             @Override
             public void onResponse(Call<List<Track>> call, Response<List<Track>> res) {
                 if (res.isSuccessful() && res.body() != null) {
