@@ -12,6 +12,7 @@ import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -69,6 +70,23 @@ public class SearchFragment extends Fragment implements SearchResultAdapter.OnTr
         results.setAdapter(adapter);
 
         api = ApiClient.getSoundCloudApi();
+        
+        loadLikedTracks();
+    }
+
+    private void loadLikedTracks() {
+        api.getLikedTracks(500, 0).enqueue(new Callback<List<Track>>() {
+            @Override
+            public void onResponse(Call<List<Track>> call, Response<List<Track>> res) {
+                if (res.isSuccessful() && res.body() != null) {
+                    adapter.setLikedTracks(res.body());
+                }
+            }
+
+            @Override
+            public void onFailure(Call<List<Track>> call, Throwable t) {
+            }
+        });
     }
 
     private void setupSearch() {
@@ -145,6 +163,38 @@ public class SearchFragment extends Fragment implements SearchResultAdapter.OnTr
     @Override
     public void onTrackClick(Track track, int position) {
         Log.d("SearchFragment", "Playing: " + track.getTitle());
+    }
+
+    @Override
+    public void onLikeClick(Track track, int position, boolean isLiked) {
+        String trackUrn = "soundcloud:tracks:" + track.getId();
+        
+        Call<Void> call = isLiked ? api.unlikeTrack(trackUrn) : api.likeTrack(trackUrn);
+        
+        call.enqueue(new Callback<Void>() {
+            @Override
+            public void onResponse(Call<Void> call, Response<Void> res) {
+                if (res.isSuccessful()) {
+                    showToast(isLiked ? "Track unliked" : "Track liked!");
+                    if (isLiked) {
+                        adapter.removeLikedTrack(track.getId());
+                    } else {
+                        adapter.addLikedTrack(track.getId());
+                    }
+                } else {
+                    showToast("Failed (HTTP " + res.code() + ")");
+                }
+            }
+
+            @Override
+            public void onFailure(Call<Void> call, Throwable t) {
+                showToast("Network error");
+            }
+        });
+    }
+
+    private void showToast(String message) {
+        Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
     }
 
     @Override

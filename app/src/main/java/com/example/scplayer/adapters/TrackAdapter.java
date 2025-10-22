@@ -3,6 +3,7 @@ package com.example.scplayer.adapters;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -19,19 +20,53 @@ import java.util.List;
 public class TrackAdapter extends RecyclerView.Adapter<TrackAdapter.ViewHolder> {
 
     private List<Track> tracks = new ArrayList<>();
+    private List<Long> likedTrackIds = new ArrayList<>();
     private OnTrackClickListener listener;
+    private boolean showAsLiked = false;
 
     public interface OnTrackClickListener {
         void onTrackClick(Track track, int pos);
+        void onLikeClick(Track track, int pos, boolean isLiked);
     }
 
     public TrackAdapter(OnTrackClickListener listener) {
         this.listener = listener;
     }
 
+    public TrackAdapter(OnTrackClickListener listener, boolean showAsLiked) {
+        this.listener = listener;
+        this.showAsLiked = showAsLiked;
+    }
+
     public void setTracks(List<Track> tracks) {
         this.tracks = tracks;
         notifyDataSetChanged();
+    }
+
+    public void setLikedTrackIds(List<Long> likedTrackIds) {
+        this.likedTrackIds = likedTrackIds;
+        notifyDataSetChanged();
+    }
+
+    public void addLikedTrack(long trackId) {
+        if (!likedTrackIds.contains(trackId)) {
+            likedTrackIds.add(trackId);
+            notifyItemChanged(findTrackPosition(trackId));
+        }
+    }
+
+    public void removeLikedTrack(long trackId) {
+        likedTrackIds.remove(trackId);
+        notifyItemChanged(findTrackPosition(trackId));
+    }
+
+    private int findTrackPosition(long trackId) {
+        for (int i = 0; i < tracks.size(); i++) {
+            if (tracks.get(i).getId() == trackId) {
+                return i;
+            }
+        }
+        return -1;
     }
 
     @NonNull
@@ -44,7 +79,9 @@ public class TrackAdapter extends RecyclerView.Adapter<TrackAdapter.ViewHolder> 
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int pos) {
-        holder.bind(tracks.get(pos), listener);
+        Track track = tracks.get(pos);
+        boolean isLiked = showAsLiked || likedTrackIds.contains(track.getId());
+        holder.bind(track, listener, isLiked);
     }
 
     @Override
@@ -57,6 +94,7 @@ public class TrackAdapter extends RecyclerView.Adapter<TrackAdapter.ViewHolder> 
         private TextView title;
         private TextView artist;
         private TextView duration;
+        private ImageButton btnLike;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -64,9 +102,10 @@ public class TrackAdapter extends RecyclerView.Adapter<TrackAdapter.ViewHolder> 
             title = itemView.findViewById(R.id.trackTitle);
             artist = itemView.findViewById(R.id.artistName);
             duration = itemView.findViewById(R.id.trackDuration);
+            btnLike = itemView.findViewById(R.id.btnLike);
         }
 
-        public void bind(Track track, OnTrackClickListener listener) {
+        public void bind(Track track, OnTrackClickListener listener, boolean showAsLiked) {
             title.setText(track.getTitle());
             artist.setText(track.getUser() != null ? track.getUser().getUsername() : "Unknown");
             duration.setText(formatDuration(track.getDuration()));
@@ -82,9 +121,17 @@ public class TrackAdapter extends RecyclerView.Adapter<TrackAdapter.ViewHolder> 
                 cover.setImageResource(R.drawable.ic_library);
             }
 
+            btnLike.setImageResource(isLiked ? R.drawable.ic_heart_filled : R.drawable.ic_heart_outline);
+
             itemView.setOnClickListener(v -> {
                 if (listener != null) {
                     listener.onTrackClick(track, getAdapterPosition());
+                }
+            });
+
+            btnLike.setOnClickListener(v -> {
+                if (listener != null) {
+                    listener.onLikeClick(track, getAdapterPosition(), isLiked);
                 }
             });
         }

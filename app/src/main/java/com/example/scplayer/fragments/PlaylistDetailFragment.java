@@ -7,6 +7,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -42,6 +43,7 @@ public class PlaylistDetailFragment extends Fragment {
     
     private Playlist playlist;
     private List<Track> tracks;
+    private List<Long> likedTrackIds = new ArrayList<>();
 
     public static PlaylistDetailFragment newInstance(Playlist playlist, List<Track> tracks) {
         PlaylistDetailFragment fragment = new PlaylistDetailFragment();
@@ -69,6 +71,7 @@ public class PlaylistDetailFragment extends Fragment {
 
         initViews(view);
         setupRecycler();
+        loadLikedTracks();
         loadTracks();
     }
 
@@ -91,21 +94,92 @@ public class PlaylistDetailFragment extends Fragment {
         });
     }
 
+    private void loadLikedTracks() {
+        api.getLikedTracks(500, 0).enqueue(new Callback<List<Track>>() {
+            @Override
+            public void onResponse(Call<List<Track>> call, Response<List<Track>> res) {
+                if (res.isSuccessful() && res.body() != null) {
+                    likedTrackIds.clear();
+                    for (Track track : res.body()) {
+                        likedTrackIds.add(track.getId());
+                    }
+                    adapter.setLikedTrackIds(likedTrackIds);
+                }
+            }
+
+            @Override
+            public void onFailure(Call<List<Track>> call, Throwable t) {
+                // Silent fail
+            }
+        });
+    }
+
     private void setupRecycler() {
-        adapter = new TrackAdapter((track, pos) -> 
-            Log.d("PlaylistDetail", "Playing: " + track.getTitle())
-        );
+        // Check if this is the "Liked Songs" playlist (ID = -1)
+        boolean isLikedPlaylist = playlist != null && playlist.getId() == -1;
+        
+        adapter = new TrackAdapter(new TrackAdapter.OnTrackClickListener() {
+            @Override
+            public void onTrackClick(Track track, int pos) {
+                Log.d("PlaylistDetail", "Playing: " + track.getTitle());
+            }
+
+            @Override
+            public void onLikeClick(Track track, int pos, boolean isLiked) {
+                String trackUrn = "soundcloud:tracks:" + track.getId();
+                
+                Call<Void> call = isLiked ? api.unlikeTrack(trackUrn) : api.likeTrack(trackUrn);
+                
+                call.enqueue(new Callback<Void>() {
+                    @Override
+                    public void onResponse(Call<Void> call, Response<Void> res) {
+                        if (res.isSuccessful()) {
+                            Toast.makeText(getContext(), isLiked ? "Track unliked" : "Track liked!", Toast.LENGTH_SHORT).show();
+                            
+                            if (isLiked) {
+                                // Remove from liked list
+                                likedTrackIds.remove(track.getId());
+                                adapter.removeLikedTrack(track.getId());
+                                
+                                // If this is the Liked Songs playlist, remove track from list
+                                if (isLikedPlaylist) {
+                                    List<Track> currentTracks = new ArrayList<>();
+                                    for (int i = 0; i < adapter.getItemCount(); i++) {
+                                        if (i != pos) {
+                                            currentTracks.add(tracks.get(i));
+                                        }
+                                    }
+                                    tracks = currentTracks;
+                                    adapter.setTracks(tracks);
+                                    adapter.setLikedTrackIds(likedTrackIds);
+                                    showEmpty(tracks.isEmpty());
+                                }
+                            } else {
+                                // Add to liked list
+                                likedTrackIds.add(track.getId());
+                                adapter.addLikedTrack(track.getId());
+                            }
+                        } else {
+                            Toast.makeText(getContext(), "Failed (HTTP " + res.code() + ")", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Call<Void> call, Throwable t) {
+                        Toast.makeText(getContext(), "Network error", Toast.LENGTH_SHORT).show();
+                    }
+                });
+            }
+        }, isLikedPlaylist);
         recycler.setLayoutManager(new LinearLayoutManager(getContext()));
         recycler.setAdapter(adapter);
     }
 
     private void loadTracks() {
         if (tracks != null) {
-            // Liked Songs - use provided tracks
             adapter.setTracks(tracks);
             showEmpty(tracks.isEmpty());
         } else if (playlist != null && playlist.getUrn() != null) {
-            // Regular playlist - fetch from API
             api.getPlaylistTracks(playlist.getUrn(), 50).enqueue(new Callback<List<Track>>() {
                 @Override
                 public void onResponse(Call<List<Track>> call, Response<List<Track>> res) {

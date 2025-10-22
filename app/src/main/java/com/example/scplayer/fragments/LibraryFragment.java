@@ -16,8 +16,10 @@ import com.example.scplayer.R;
 import com.example.scplayer.adapters.PlaylistAdapter;
 import com.example.scplayer.api.ApiClient;
 import com.example.scplayer.api.SoundCloudApi;
+import com.example.scplayer.models.PaginatedResponse;
 import com.example.scplayer.models.Playlist;
 import com.example.scplayer.models.Track;
+import com.example.scplayer.utils.PlaylistManager;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,6 +34,7 @@ public class LibraryFragment extends Fragment {
     private View empty;
     private PlaylistAdapter adapter;
     private SoundCloudApi api;
+    private PlaylistManager playlistManager;
     private List<Track> liked = new ArrayList<>();
 
     @Nullable
@@ -53,6 +56,7 @@ public class LibraryFragment extends Fragment {
         recycler = view.findViewById(R.id.playlistsRecycler);
         empty = view.findViewById(R.id.empty);
         api = ApiClient.getSoundCloudApi();
+        playlistManager = new PlaylistManager(api);
     }
 
     private void setupRecyclers() {
@@ -79,7 +83,6 @@ public class LibraryFragment extends Fragment {
     private void loadLibraryData() {
         showEmpty(false);
         loadLikedTracks();
-        loadPlaylists();
     }
 
     private void loadLikedTracks() {
@@ -91,10 +94,8 @@ public class LibraryFragment extends Fragment {
                     if (!liked.isEmpty()) {
                         adapter.setPlaylists(List.of(createLiked()));
                     }
-                    loadPlaylists();
-                } else {
-                    loadPlaylists();
                 }
+                loadPlaylists();
             }
 
             @Override
@@ -105,23 +106,7 @@ public class LibraryFragment extends Fragment {
     }
 
     private void loadPlaylists() {
-        api.getLikedPlaylistsV2(50, 0).enqueue(new Callback<List<Playlist>>() {
-            @Override
-            public void onResponse(Call<List<Playlist>> call, Response<List<Playlist>> res) {
-                if (res.isSuccessful() && res.body() != null) {
-                    fetchArtwork(res.body(), 0);
-                } else {
-                    Log.d("LibraryFragment", "Failed to load playlists: " + res.code());
-                    checkIfEmpty();
-                }
-            }
-
-            @Override
-            public void onFailure(Call<List<Playlist>> call, Throwable t) {
-                Log.d("LibraryFragment", "Error: " + t.getMessage());
-                checkIfEmpty();
-            }
-        });
+        playlistManager.loadUserPlaylists(playlists -> fetchArtwork(playlists, 0));
     }
     
     private void fetchArtwork(List<Playlist> playlists, int i) {

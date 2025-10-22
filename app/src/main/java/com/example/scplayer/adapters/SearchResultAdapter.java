@@ -3,6 +3,7 @@ package com.example.scplayer.adapters;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -20,10 +21,12 @@ import java.util.concurrent.TimeUnit;
 public class SearchResultAdapter extends RecyclerView.Adapter<SearchResultAdapter.ViewHolder> {
     
     private List<Track> tracks = new ArrayList<>();
+    private List<Long> likedTrackIds = new ArrayList<>();
     private OnTrackClickListener listener;
 
     public interface OnTrackClickListener {
-        void onTrackClick(Track track, int position);
+        void onTrackClick(Track track, int pos);
+        void onLikeClick(Track track, int pos, boolean isLiked);
     }
 
     public SearchResultAdapter(OnTrackClickListener listener) {
@@ -33,6 +36,37 @@ public class SearchResultAdapter extends RecyclerView.Adapter<SearchResultAdapte
     public void setTracks(List<Track> tracks) {
         this.tracks = tracks;
         notifyDataSetChanged();
+    }
+
+    public void setLikedTracks(List<Track> likedTracks) {
+        this.likedTrackIds.clear();
+        if (likedTracks != null) {
+            for (Track track : likedTracks) {
+                this.likedTrackIds.add(track.getId());
+            }
+        }
+        notifyDataSetChanged();
+    }
+
+    public void addLikedTrack(long trackId) {
+        if (!likedTrackIds.contains(trackId)) {
+            likedTrackIds.add(trackId);
+            notifyItemChanged(findTrackPosition(trackId));
+        }
+    }
+
+    public void removeLikedTrack(long trackId) {
+        likedTrackIds.remove(trackId);
+        notifyItemChanged(findTrackPosition(trackId));
+    }
+
+    private int findTrackPosition(long trackId) {
+        for (int i = 0; i < tracks.size(); i++) {
+            if (tracks.get(i).getId() == trackId) {
+                return i;
+            }
+        }
+        return -1;
     }
 
     public void clearTracks() {
@@ -49,9 +83,8 @@ public class SearchResultAdapter extends RecyclerView.Adapter<SearchResultAdapte
     }
 
     @Override
-    public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        Track track = tracks.get(position);
-        holder.bind(track, position);
+    public void onBindViewHolder(@NonNull ViewHolder holder, int pos) {
+        holder.bind(tracks.get(pos), pos);
     }
 
     @Override
@@ -64,6 +97,7 @@ public class SearchResultAdapter extends RecyclerView.Adapter<SearchResultAdapte
         private TextView trackTitle;
         private TextView artistName;
         private TextView trackDuration;
+        private ImageButton btnLike;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -71,26 +105,23 @@ public class SearchResultAdapter extends RecyclerView.Adapter<SearchResultAdapte
             trackTitle = itemView.findViewById(R.id.trackTitle);
             artistName = itemView.findViewById(R.id.artistName);
             trackDuration = itemView.findViewById(R.id.trackDuration);
+            btnLike = itemView.findViewById(R.id.btnLike);
         }
 
-        public void bind(Track track, int position) {
-            // Set track title
+        public void bind(Track track, int pos) {
             trackTitle.setText(track.getTitle());
 
-            // Set artist name
             if (track.getUser() != null && track.getUser().getUsername() != null) {
                 artistName.setText(track.getUser().getUsername());
             } else {
                 artistName.setText("Unknown Artist");
             }
 
-            // Set duration
             long durationMs = track.getDuration();
             long minutes = TimeUnit.MILLISECONDS.toMinutes(durationMs);
             long seconds = TimeUnit.MILLISECONDS.toSeconds(durationMs) % 60;
             trackDuration.setText(String.format("%d:%02d", minutes, seconds));
 
-            // Load album cover
             String artworkUrl = track.getHighQualityArtworkUrl();
             if (artworkUrl != null && !artworkUrl.isEmpty()) {
                 Glide.with(itemView.getContext())
@@ -101,10 +132,18 @@ public class SearchResultAdapter extends RecyclerView.Adapter<SearchResultAdapte
                 trackCover.setImageResource(R.drawable.ic_library);
             }
 
-            // Click listener
+            boolean isLiked = likedTrackIds.contains(track.getId());
+            btnLike.setImageResource(isLiked ? R.drawable.ic_heart_filled : R.drawable.ic_heart_outline);
+
             itemView.setOnClickListener(v -> {
                 if (listener != null) {
-                    listener.onTrackClick(track, position);
+                    listener.onTrackClick(track, pos);
+                }
+            });
+
+            btnLike.setOnClickListener(v -> {
+                if (listener != null) {
+                    listener.onLikeClick(track, pos, isLiked);
                 }
             });
         }
