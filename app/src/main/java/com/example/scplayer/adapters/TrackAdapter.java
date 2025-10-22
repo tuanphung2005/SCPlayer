@@ -105,7 +105,7 @@ public class TrackAdapter extends RecyclerView.Adapter<TrackAdapter.ViewHolder> 
             btnLike = itemView.findViewById(R.id.btnLike);
         }
 
-        public void bind(Track track, OnTrackClickListener listener, boolean showAsLiked) {
+        public void bind(Track track, OnTrackClickListener listener, boolean isLiked) {
             title.setText(track.getTitle());
             artist.setText(track.getUser() != null ? track.getUser().getUsername() : "Unknown");
             duration.setText(formatDuration(track.getDuration()));
