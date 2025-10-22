@@ -1,17 +1,25 @@
 package com.example.scplayer.playback;
 
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
 import android.os.Binder;
+import android.os.Build;
 import android.os.IBinder;
 import android.util.Log;
 
 import androidx.annotation.Nullable;
+import androidx.core.app.NotificationCompat;
 import androidx.media3.common.MediaItem;
 import androidx.media3.common.PlaybackException;
 import androidx.media3.common.Player;
 import androidx.media3.exoplayer.ExoPlayer;
 
+import com.example.scplayer.HomeActivity;
+import com.example.scplayer.R;
 import com.example.scplayer.api.ApiClient;
 import com.example.scplayer.api.SoundCloudApi;
 import com.example.scplayer.models.Track;
@@ -24,11 +32,14 @@ import retrofit2.Response;
 public class PlaybackService extends Service {
 
     private static final String TAG = "PlaybackService";
+    private static final String CHANNEL_ID = "playback_channel";
+    private static final int NOTIFICATION_ID = 1;
     
     private ExoPlayer player;
     private SoundCloudApi api;
     private final IBinder binder = new PlaybackBinder();
     private PlaybackListener listener;
+    private Track currentTrack;
 
     public class PlaybackBinder extends Binder {
         public PlaybackService getService() {
@@ -39,8 +50,12 @@ public class PlaybackService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
-        player = new ExoPlayer.Builder(this).build();
+        player = new ExoPlayer.Builder(this)
+                .setWakeMode(android.os.PowerManager.PARTIAL_WAKE_LOCK)
+                .build();
         api = ApiClient.getSoundCloudApi();
+        
+        createNotificationChannel();
         
         player.addListener(new Player.Listener() {
             @Override
@@ -48,6 +63,7 @@ public class PlaybackService extends Service {
                 if (listener != null) {
                     listener.onPlaybackStateChanged(state == Player.STATE_READY && player.getPlayWhenReady());
                 }
+                updateNotification();
             }
 
             @Override
@@ -60,8 +76,65 @@ public class PlaybackService extends Service {
         });
     }
 
+    private void createNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationChannel channel = new NotificationChannel(
+                    CHANNEL_ID,
+                    "Music Playback",
+                    NotificationManager.IMPORTANCE_LOW
+            );
+            channel.setDescription("Shows currently playing music");
+            channel.setShowBadge(false);
+            
+            NotificationManager manager = getSystemService(NotificationManager.class);
+            if (manager != null) {
+                manager.createNotificationChannel(channel);
+            }
+        }
+    }
+
+    private void startForeground() {
+        Notification notification = buildNotification();
+        startForeground(NOTIFICATION_ID, notification);
+    }
+
+    private void updateNotification() {
+        if (currentTrack != null) {
+            Notification notification = buildNotification();
+            NotificationManager manager = getSystemService(NotificationManager.class);
+            if (manager != null) {
+                manager.notify(NOTIFICATION_ID, notification);
+            }
+        }
+    }
+
+    private Notification buildNotification() {
+        Intent intent = new Intent(this, HomeActivity.class);
+        PendingIntent pendingIntent = PendingIntent.getActivity(
+                this, 0, intent, PendingIntent.FLAG_IMMUTABLE
+        );
+
+        String title = currentTrack != null ? currentTrack.getTitle() : "No track";
+        String artist = currentTrack != null && currentTrack.getUser() != null 
+                ? currentTrack.getUser().getUsername() 
+                : "Unknown Artist";
+
+        return new NotificationCompat.Builder(this, CHANNEL_ID)
+                .setContentTitle(title)
+                .setContentText(artist)
+                .setSmallIcon(R.drawable.ic_play)
+                .setContentIntent(pendingIntent)
+                .setOngoing(true)
+                .setSilent(true)
+                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+                .build();
+    }
+
     public void playTrack(Track track) {
         if (track == null) return;
+        
+        this.currentTrack = track;
+        startForeground();
         
         String trackUrn = "soundcloud:tracks:" + track.getId();
         
@@ -76,6 +149,7 @@ public class PlaybackService extends Service {
                         player.setMediaItem(mediaItem);
                         player.prepare();
                         player.play();
+                        updateNotification();
                         Log.d(TAG, "Playing: " + track.getTitle() + " from " + streamUrl);
                     } else {
                         Log.e(TAG, "No stream URL available");
@@ -104,12 +178,14 @@ public class PlaybackService extends Service {
     public void pause() {
         if (player != null) {
             player.pause();
+            updateNotification();
         }
     }
 
     public void resume() {
         if (player != null) {
             player.play();
+            updateNotification();
         }
     }
 
@@ -134,6 +210,7 @@ public class PlaybackService extends Service {
             player.release();
             player = null;
         }
+        stopForeground(true);
     }
 
     public interface PlaybackListener {
