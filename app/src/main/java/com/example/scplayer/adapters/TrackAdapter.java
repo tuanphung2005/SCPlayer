@@ -22,7 +22,6 @@ public class TrackAdapter extends RecyclerView.Adapter<TrackAdapter.ViewHolder> 
     private List<Track> tracks = new ArrayList<>();
     private List<Long> likedTrackIds = new ArrayList<>();
     private OnTrackClickListener listener;
-    private boolean showAsLiked = false;
 
     public interface OnTrackClickListener {
         void onTrackClick(Track track, int pos);
@@ -31,11 +30,6 @@ public class TrackAdapter extends RecyclerView.Adapter<TrackAdapter.ViewHolder> 
 
     public TrackAdapter(OnTrackClickListener listener) {
         this.listener = listener;
-    }
-
-    public TrackAdapter(OnTrackClickListener listener, boolean showAsLiked) {
-        this.listener = listener;
-        this.showAsLiked = showAsLiked;
     }
 
     public void setTracks(List<Track> tracks) {
@@ -80,7 +74,7 @@ public class TrackAdapter extends RecyclerView.Adapter<TrackAdapter.ViewHolder> 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int pos) {
         Track track = tracks.get(pos);
-        boolean isLiked = showAsLiked || likedTrackIds.contains(track.getId());
+        boolean isLiked = likedTrackIds.contains(track.getId());
         holder.bind(track, listener, isLiked);
     }
 

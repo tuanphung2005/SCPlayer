@@ -103,19 +103,21 @@ public class PlaylistDetailFragment extends Fragment {
                     for (Track track : res.body()) {
                         likedTrackIds.add(track.getId());
                     }
-                    adapter.setLikedTrackIds(likedTrackIds);
+                    if (adapter != null) {
+                        adapter.setLikedTrackIds(likedTrackIds);
+                    }
                 }
             }
 
             @Override
             public void onFailure(Call<List<Track>> call, Throwable t) {
-                // Silent fail
+                Log.e("PlaylistDetail", "Failed to load liked tracks", t);
             }
         });
     }
 
     private void setupRecycler() {
-        // Check if this is the "Liked Songs" playlist (ID = -1)
+
         boolean isLikedPlaylist = playlist != null && playlist.getId() == -1;
         
         adapter = new TrackAdapter(new TrackAdapter.OnTrackClickListener() {
@@ -127,7 +129,6 @@ public class PlaylistDetailFragment extends Fragment {
             @Override
             public void onLikeClick(Track track, int pos, boolean isLiked) {
                 String trackUrn = "soundcloud:tracks:" + track.getId();
-                
                 Call<Void> call = isLiked ? api.unlikeTrack(trackUrn) : api.likeTrack(trackUrn);
                 
                 call.enqueue(new Callback<Void>() {
@@ -136,29 +137,22 @@ public class PlaylistDetailFragment extends Fragment {
                         if (res.isSuccessful()) {
                             Toast.makeText(getContext(), isLiked ? "Track unliked" : "Track liked!", Toast.LENGTH_SHORT).show();
                             
+                            // Update liked state
                             if (isLiked) {
-                                // Remove from liked list
                                 likedTrackIds.remove(track.getId());
-                                adapter.removeLikedTrack(track.getId());
-                                
-                                // If this is the Liked Songs playlist, remove track from list
-                                if (isLikedPlaylist) {
-                                    List<Track> currentTracks = new ArrayList<>();
-                                    for (int i = 0; i < adapter.getItemCount(); i++) {
-                                        if (i != pos) {
-                                            currentTracks.add(tracks.get(i));
-                                        }
-                                    }
-                                    tracks = currentTracks;
-                                    adapter.setTracks(tracks);
-                                    adapter.setLikedTrackIds(likedTrackIds);
-                                    showEmpty(tracks.isEmpty());
-                                }
                             } else {
-                                // Add to liked list
                                 likedTrackIds.add(track.getId());
-                                adapter.addLikedTrack(track.getId());
                             }
+                            
+                            // If unliked in Liked Songs playlist, remove track from list
+                            if (isLiked && isLikedPlaylist) {
+                                tracks.remove(pos);
+                                adapter.setTracks(tracks);
+                                showEmpty(tracks.isEmpty());
+                            }
+                            
+                            // Update adapter with new liked state
+                            adapter.setLikedTrackIds(likedTrackIds);
                         } else {
                             Toast.makeText(getContext(), "Failed (HTTP " + res.code() + ")", Toast.LENGTH_SHORT).show();
                         }
@@ -170,7 +164,7 @@ public class PlaylistDetailFragment extends Fragment {
                     }
                 });
             }
-        }, isLikedPlaylist);
+        });
         recycler.setLayoutManager(new LinearLayoutManager(getContext()));
         recycler.setAdapter(adapter);
     }
