@@ -45,6 +45,11 @@
         <activity
             android:name=".HomeActivity"
             android:exported="false" />
+        
+        <service
+            android:name=".playback.PlaybackService"
+            android:enabled="true"
+            android:exported="false" />
     </application>
 
 </manifest>

@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/miniPlayerCard"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:visibility="gone"
+    app:cardCornerRadius="0dp"
+    app:cardElevation="4dp">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="12dp">
+
+        <ImageView
+            android:id="@+id/miniPlayerCover"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:scaleType="centerCrop"
+            android:background="#E0E0E0"
+            android:contentDescription="Track cover"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent" />
+
+        <LinearLayout
+            android:id="@+id/miniPlayerInfo"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginStart="12dp"
+            android:layout_marginEnd="8dp"
+            app:layout_constraintStart_toEndOf="@id/miniPlayerCover"
+            app:layout_constraintEnd_toStartOf="@id/miniPlayerControls"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent">
+
+            <TextView
+                android:id="@+id/miniPlayerTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Track Title"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:textColor="#000000"
+                android:maxLines="1"
+                android:ellipsize="end" />
+
+            <TextView
+                android:id="@+id/miniPlayerArtist"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="Artist Name"
+                android:textSize="12sp"
+                android:textColor="#666666"
+                android:maxLines="1"
+                android:ellipsize="end" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/miniPlayerControls"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent">
+
+            <ImageButton
+                android:id="@+id/btnPrevious"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:src="@drawable/ic_skip_previous"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:scaleType="fitCenter"
+                android:contentDescription="Previous track" />
+
+            <ImageButton
+                android:id="@+id/btnPlayPause"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:src="@drawable/ic_play"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:scaleType="fitCenter"
+                android:contentDescription="Play or pause" />
+
+            <ImageButton
+                android:id="@+id/btnNext"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:src="@drawable/ic_skip_next"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:scaleType="fitCenter"
+                android:contentDescription="Next track" />
+
+        </LinearLayout>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</com.google.android.material.card.MaterialCardView>

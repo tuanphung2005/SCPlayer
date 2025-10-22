@@ -5,7 +5,6 @@ import android.os.Bundle;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
-import androidx.fragment.app.FragmentTransaction;
 
 import com.example.scplayer.fragments.HomeFragment;
 import com.example.scplayer.fragments.LibraryFragment;
@@ -27,7 +26,6 @@ public class HomeActivity extends AppCompatActivity {
 
         fm = getSupportFragmentManager();
         
-        // fragments
         home = new HomeFragment();
         search = new SearchFragment();
         library = new LibraryFragment();

@@ -164,6 +164,7 @@ public class SearchFragment extends Fragment implements SearchResultAdapter.OnTr
     @Override
     public void onTrackClick(Track track, int position) {
         Log.d("SearchFragment", "Playing: " + track.getTitle());
+        com.example.scplayer.utils.MiniPlayer.getInstance().setPlaylist(adapter.getTracks(), position);
     }
 
     @Override
