@@ -1,9 +1,10 @@
 package com.example.scplayer.models;
 
 import com.google.gson.annotations.SerializedName;
+import java.io.Serializable;
 import java.util.List;
 
-public class Playlist {
+public class Playlist implements Serializable {
     @SerializedName("id")
     private long id;
     
@@ -36,6 +37,9 @@ public class Playlist {
     
     @SerializedName("uri")
     private String uri;
+    
+    @SerializedName("urn")
+    private String urn;
     
     @SerializedName("permalink_url")
     private String permalinkUrl;
@@ -126,6 +130,14 @@ public class Playlist {
 
     public void setUri(String uri) {
         this.uri = uri;
+    }
+    
+    public String getUrn() {
+        return urn;
+    }
+
+    public void setUrn(String urn) {
+        this.urn = urn;
     }
 
     public String getPermalinkUrl() {

@@ -1,8 +1,9 @@
 package com.example.scplayer.models;
 
 import com.google.gson.annotations.SerializedName;
+import java.io.Serializable;
 
-public class Track {
+public class Track implements Serializable {
     @SerializedName("id")
     private long id;
     

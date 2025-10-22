@@ -5,14 +5,13 @@ import android.os.Handler;
 import android.os.Looper;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
-import android.widget.ProgressBar;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -24,7 +23,6 @@ import com.example.scplayer.R;
 import com.example.scplayer.adapters.SearchResultAdapter;
 import com.example.scplayer.api.ApiClient;
 import com.example.scplayer.api.SoundCloudApi;
-import com.example.scplayer.models.SearchResponse;
 import com.example.scplayer.models.Track;
 
 import java.util.List;
@@ -39,7 +37,6 @@ public class SearchFragment extends Fragment implements SearchResultAdapter.OnTr
     private ImageButton clear;
     private RecyclerView results;
     private LinearLayout empty;
-    private ProgressBar loading;
     private SearchResultAdapter adapter;
     private SoundCloudApi api;
 
@@ -66,7 +63,6 @@ public class SearchFragment extends Fragment implements SearchResultAdapter.OnTr
         clear = view.findViewById(R.id.btnClearSearch);
         results = view.findViewById(R.id.recyclerViewResults);
         empty = view.findViewById(R.id.emptyState);
-        loading = view.findViewById(R.id.progressBar);
 
         adapter = new SearchResultAdapter(this);
         results.setLayoutManager(new LinearLayoutManager(getContext()));
@@ -109,7 +105,6 @@ public class SearchFragment extends Fragment implements SearchResultAdapter.OnTr
     }
 
     private void performSearch(String q) {
-        showLoading(true);
         showEmpty(false);
 
         Call<List<Track>> call = api.searchTracks(q.trim(), 20, 0);
@@ -117,8 +112,6 @@ public class SearchFragment extends Fragment implements SearchResultAdapter.OnTr
         call.enqueue(new Callback<List<Track>>() {
             @Override
             public void onResponse(Call<List<Track>> call, Response<List<Track>> res) {
-                showLoading(false);
-
                 if (res.isSuccessful() && res.body() != null) {
                     List<Track> tracks = res.body();
 
@@ -128,54 +121,35 @@ public class SearchFragment extends Fragment implements SearchResultAdapter.OnTr
                     } else {
                         adapter.clearTracks();
                         showEmpty(true);
-                        if (getContext() != null) {
-                            Toast.makeText(getContext(), "No tracks found", Toast.LENGTH_SHORT).show();
-                        }
+                        Log.d("SearchFragment", "No tracks found");
                     }
                 } else {
                     adapter.clearTracks();
                     showEmpty(true);
-                    if (getContext() != null) {
-                        Toast.makeText(getContext(), "Search failed: " + res.code(), Toast.LENGTH_SHORT).show();
-                    }
+                    Log.d("SearchFragment", "Search failed: " + res.code());
                 }
             }
 
             @Override
             public void onFailure(Call<List<Track>> call, Throwable t) {
-                showLoading(false);
                 showEmpty(true);
-                if (getContext() != null) {
-                    Toast.makeText(getContext(), "Network error: " + t.getMessage(), Toast.LENGTH_LONG).show();
-                }
+                Log.d("SearchFragment", "Network error: " + t.getMessage());
             }
         });
     }
 
-    private void showLoading(boolean show) {
-        if (loading != null) {
-            loading.setVisibility(show ? View.VISIBLE : View.GONE);
-        }
-    }
-
     private void showEmpty(boolean show) {
-        if (empty != null) {
-            empty.setVisibility(show ? View.VISIBLE : View.GONE);
-        }
+        empty.setVisibility(show ? View.VISIBLE : View.GONE);
     }
 
     @Override
     public void onTrackClick(Track track, int position) {
-        if (getContext() != null) {
-            Toast.makeText(getContext(), "Playing: " + track.getTitle(), Toast.LENGTH_SHORT).show();
-        }
+        Log.d("SearchFragment", "Playing: " + track.getTitle());
     }
 
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        if (runnable != null) {
-            handler.removeCallbacks(runnable);
-        }
+        handler.removeCallbacks(runnable);
     }
 }
