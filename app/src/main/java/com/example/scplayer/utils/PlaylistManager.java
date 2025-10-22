@@ -24,13 +24,13 @@ public class PlaylistManager {
     }
 
     public void loadUserPlaylists(PlaylistsLoadCallback callback) {
-        api.getUserPlaylists(50, true).enqueue(new Callback<PaginatedResponse<Playlist>>() {
+        api.getUserPlaylists(ApiConstants.USER_PLAYLISTS_LIMIT, true).enqueue(new Callback<PaginatedResponse<Playlist>>() {
             @Override
             public void onResponse(Call<PaginatedResponse<Playlist>> call, Response<PaginatedResponse<Playlist>> res) {
                 if (res.isSuccessful() && res.body() != null && res.body().getCollection() != null) {
                     List<Playlist> userPlaylists = res.body().getCollection();
                     
-                    api.getLikedPlaylistsV2(50, 0).enqueue(new Callback<List<Playlist>>() {
+                    api.getLikedPlaylistsV2(ApiConstants.LIKED_PLAYLISTS_LIMIT, 0).enqueue(new Callback<List<Playlist>>() {
                         @Override
                         public void onResponse(Call<List<Playlist>> call, Response<List<Playlist>> res) {
                             if (res.isSuccessful() && res.body() != null) {
@@ -57,7 +57,7 @@ public class PlaylistManager {
     }
 
     private void loadLikedPlaylistsOnly(PlaylistsLoadCallback callback) {
-        api.getLikedPlaylistsV2(50, 0).enqueue(new Callback<List<Playlist>>() {
+        api.getLikedPlaylistsV2(ApiConstants.LIKED_PLAYLISTS_LIMIT, 0).enqueue(new Callback<List<Playlist>>() {
             @Override
             public void onResponse(Call<List<Playlist>> call, Response<List<Playlist>> res) {
                 if (res.isSuccessful() && res.body() != null) {

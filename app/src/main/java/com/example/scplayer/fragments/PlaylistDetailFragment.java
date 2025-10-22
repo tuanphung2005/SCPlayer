@@ -21,6 +21,8 @@ import com.example.scplayer.api.ApiClient;
 import com.example.scplayer.api.SoundCloudApi;
 import com.example.scplayer.models.Playlist;
 import com.example.scplayer.models.Track;
+import com.example.scplayer.utils.ApiConstants;
+import com.example.scplayer.utils.TrackLikeManager;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,6 +42,7 @@ public class PlaylistDetailFragment extends Fragment {
     private ImageButton btnBack;
     private TrackAdapter adapter;
     private SoundCloudApi api;
+    private TrackLikeManager likeManager;
     
     private Playlist playlist;
     private List<Track> tracks;
@@ -82,6 +85,7 @@ public class PlaylistDetailFragment extends Fragment {
         btnBack = view.findViewById(R.id.btnBack);
 
         api = ApiClient.getSoundCloudApi();
+        likeManager = new TrackLikeManager(api);
         
         if (playlist != null) {
             titleView.setText(playlist.getTitle());
@@ -95,30 +99,25 @@ public class PlaylistDetailFragment extends Fragment {
     }
 
     private void loadLikedTracks() {
-        api.getLikedTracks(500, 0).enqueue(new Callback<List<Track>>() {
+        likeManager.loadLikedTracks(ApiConstants.MAX_LIKED_TRACKS, new TrackLikeManager.LoadCallback() {
             @Override
-            public void onResponse(Call<List<Track>> call, Response<List<Track>> res) {
-                if (res.isSuccessful() && res.body() != null) {
-                    likedTrackIds.clear();
-                    for (Track track : res.body()) {
-                        likedTrackIds.add(track.getId());
-                    }
-                    if (adapter != null) {
-                        adapter.setLikedTrackIds(likedTrackIds);
-                    }
+            public void onLoaded(List<Long> ids) {
+                likedTrackIds = ids;
+                if (adapter != null) {
+                    adapter.setLikedTrackIds(likedTrackIds);
                 }
             }
 
             @Override
-            public void onFailure(Call<List<Track>> call, Throwable t) {
-                Log.e("PlaylistDetail", "Failed to load liked tracks", t);
+            public void onError(String error) {
+                Log.e("PlaylistDetail", "Failed to load liked tracks: " + error);
             }
         });
     }
 
     private void setupRecycler() {
 
-        boolean isLikedPlaylist = playlist != null && playlist.getId() == -1;
+        boolean isLikedPlaylist = playlist != null && playlist.getId() == ApiConstants.LIKED_SONGS_PLAYLIST_ID;
         
         adapter = new TrackAdapter(new TrackAdapter.OnTrackClickListener() {
             @Override
@@ -129,36 +128,33 @@ public class PlaylistDetailFragment extends Fragment {
 
             @Override
             public void onLikeClick(Track track, int pos, boolean isLiked) {
-                String trackUrn = "soundcloud:tracks:" + track.getId();
-                Call<Void> call = isLiked ? api.unlikeTrack(trackUrn) : api.likeTrack(trackUrn);
-                
-                call.enqueue(new Callback<Void>() {
+                likeManager.toggleLike(track, isLiked, new TrackLikeManager.LikeCallback() {
                     @Override
-                    public void onResponse(Call<Void> call, Response<Void> res) {
-                        if (res.isSuccessful()) {
-                            Toast.makeText(getContext(), isLiked ? "Track unliked" : "Track liked!", Toast.LENGTH_SHORT).show();
-                            if (isLiked) {
-                                likedTrackIds.remove(track.getId());
-                            } else {
-                                likedTrackIds.add(track.getId());
-                            }
-                            
-    
-                            if (isLiked && isLikedPlaylist) {
-                                tracks.remove(pos);
-                                adapter.setTracks(tracks);
-                                showEmpty(tracks.isEmpty());
-                            }
-
-                            adapter.setLikedTrackIds(likedTrackIds);
+                    public void onSuccess(boolean nowLiked) {
+                        Toast.makeText(getContext(), nowLiked ? "Track liked!" : "Track unliked", Toast.LENGTH_SHORT).show();
+                        
+                        if (nowLiked) {
+                            likedTrackIds.add(track.getId());
                         } else {
-                            Toast.makeText(getContext(), "Failed (HTTP " + res.code() + ")", Toast.LENGTH_SHORT).show();
+                            likedTrackIds.remove(track.getId());
                         }
+                        
+                        if (!nowLiked && isLikedPlaylist) {
+                            tracks.remove(pos);
+                            adapter.setTracks(tracks);
+                            showEmpty(tracks.isEmpty());
+                        }
+
+                        adapter.setLikedTrackIds(likedTrackIds);
                     }
 
                     @Override
-                    public void onFailure(Call<Void> call, Throwable t) {
-                        Toast.makeText(getContext(), "Network error", Toast.LENGTH_SHORT).show();
+                    public void onError(int code, Throwable t) {
+                        if (t != null) {
+                            Toast.makeText(getContext(), "Network error", Toast.LENGTH_SHORT).show();
+                        } else {
+                            Toast.makeText(getContext(), "Failed (HTTP " + code + ")", Toast.LENGTH_SHORT).show();
+                        }
                     }
                 });
             }
@@ -172,7 +168,7 @@ public class PlaylistDetailFragment extends Fragment {
             adapter.setTracks(tracks);
             showEmpty(tracks.isEmpty());
         } else if (playlist != null && playlist.getUrn() != null) {
-            api.getPlaylistTracks(playlist.getUrn(), 50).enqueue(new Callback<List<Track>>() {
+            api.getPlaylistTracks(playlist.getUrn(), ApiConstants.PLAYLIST_TRACKS_LIMIT).enqueue(new Callback<List<Track>>() {
                 @Override
                 public void onResponse(Call<List<Track>> call, Response<List<Track>> res) {
                     if (res.isSuccessful() && res.body() != null) {

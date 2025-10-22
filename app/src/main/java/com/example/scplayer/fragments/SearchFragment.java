@@ -25,6 +25,8 @@ import com.example.scplayer.adapters.SearchResultAdapter;
 import com.example.scplayer.api.ApiClient;
 import com.example.scplayer.api.SoundCloudApi;
 import com.example.scplayer.models.Track;
+import com.example.scplayer.utils.ApiConstants;
+import com.example.scplayer.utils.TrackLikeManager;
 
 import java.util.List;
 
@@ -40,10 +42,10 @@ public class SearchFragment extends Fragment implements SearchResultAdapter.OnTr
     private LinearLayout empty;
     private SearchResultAdapter adapter;
     private SoundCloudApi api;
+    private TrackLikeManager likeManager;
 
     private Handler handler = new Handler(Looper.getMainLooper());
     private Runnable runnable;
-    private static final int DELAY = 500;
 
     @Nullable
     @Override
@@ -70,21 +72,20 @@ public class SearchFragment extends Fragment implements SearchResultAdapter.OnTr
         results.setAdapter(adapter);
 
         api = ApiClient.getSoundCloudApi();
+        likeManager = new TrackLikeManager(api);
         
         loadLikedTracks();
     }
 
     private void loadLikedTracks() {
-        api.getLikedTracks(500, 0).enqueue(new Callback<List<Track>>() {
+        likeManager.loadLikedTracks(ApiConstants.MAX_LIKED_TRACKS, new TrackLikeManager.LoadCallback() {
             @Override
-            public void onResponse(Call<List<Track>> call, Response<List<Track>> res) {
-                if (res.isSuccessful() && res.body() != null) {
-                    adapter.setLikedTracks(res.body());
-                }
+            public void onLoaded(List<Long> likedTrackIds) {
+                adapter.setLikedTrackIds(likedTrackIds);
             }
 
             @Override
-            public void onFailure(Call<List<Track>> call, Throwable t) {
+            public void onError(String error) {
             }
         });
     }
@@ -104,7 +105,7 @@ public class SearchFragment extends Fragment implements SearchResultAdapter.OnTr
 
                 if (s.length() > 0) {
                     runnable = () -> performSearch(s.toString());
-                    handler.postDelayed(runnable, DELAY);
+                    handler.postDelayed(runnable, ApiConstants.SEARCH_DEBOUNCE_DELAY_MS);
                 } else {
                     adapter.clearTracks();
                     showEmpty(true);
@@ -125,7 +126,7 @@ public class SearchFragment extends Fragment implements SearchResultAdapter.OnTr
     private void performSearch(String q) {
         showEmpty(false);
 
-        Call<List<Track>> call = api.searchTracks(q.trim(), 20, 0);
+        Call<List<Track>> call = api.searchTracks(q.trim(), ApiConstants.SEARCH_RESULTS_LIMIT, 0);
 
         call.enqueue(new Callback<List<Track>>() {
             @Override
@@ -167,28 +168,24 @@ public class SearchFragment extends Fragment implements SearchResultAdapter.OnTr
 
     @Override
     public void onLikeClick(Track track, int position, boolean isLiked) {
-        String trackUrn = "soundcloud:tracks:" + track.getId();
-        
-        Call<Void> call = isLiked ? api.unlikeTrack(trackUrn) : api.likeTrack(trackUrn);
-        
-        call.enqueue(new Callback<Void>() {
+        likeManager.toggleLike(track, isLiked, new TrackLikeManager.LikeCallback() {
             @Override
-            public void onResponse(Call<Void> call, Response<Void> res) {
-                if (res.isSuccessful()) {
-                    showToast(isLiked ? "Track unliked" : "Track liked!");
-                    if (isLiked) {
-                        adapter.removeLikedTrack(track.getId());
-                    } else {
-                        adapter.addLikedTrack(track.getId());
-                    }
+            public void onSuccess(boolean nowLiked) {
+                showToast(nowLiked ? "Track liked!" : "Track unliked");
+                if (nowLiked) {
+                    adapter.addLikedTrack(track.getId());
                 } else {
-                    showToast("Failed (HTTP " + res.code() + ")");
+                    adapter.removeLikedTrack(track.getId());
                 }
             }
 
             @Override
-            public void onFailure(Call<Void> call, Throwable t) {
-                showToast("Network error");
+            public void onError(int code, Throwable t) {
+                if (t != null) {
+                    showToast("Network error");
+                } else {
+                    showToast("Failed (HTTP " + code + ")");
+                }
             }
         });
     }

@@ -19,6 +19,7 @@ import com.example.scplayer.api.SoundCloudApi;
 import com.example.scplayer.models.PaginatedResponse;
 import com.example.scplayer.models.Playlist;
 import com.example.scplayer.models.Track;
+import com.example.scplayer.utils.ApiConstants;
 import com.example.scplayer.utils.PlaylistManager;
 
 import java.util.ArrayList;
@@ -61,13 +62,13 @@ public class LibraryFragment extends Fragment {
 
     private void setupRecyclers() {
         adapter = new PlaylistAdapter(p -> {
-            if (p.getId() == -1) {
+            if (p.getId() == ApiConstants.LIKED_SONGS_PLAYLIST_ID) {
                 openPlaylist(p, liked);
             } else {
                 openPlaylist(p, null);
             }
         });
-        recycler.setLayoutManager(new GridLayoutManager(getContext(), 2));
+        recycler.setLayoutManager(new GridLayoutManager(getContext(), ApiConstants.PLAYLIST_GRID_COLUMNS));
         recycler.setAdapter(adapter);
     }
     
@@ -86,7 +87,7 @@ public class LibraryFragment extends Fragment {
     }
 
     private void loadLikedTracks() {
-        api.getLikedTracks(500, 0).enqueue(new Callback<List<Track>>() {
+        api.getLikedTracks(ApiConstants.MAX_LIKED_TRACKS, 0).enqueue(new Callback<List<Track>>() {
             @Override
             public void onResponse(Call<List<Track>> call, Response<List<Track>> res) {
                 if (res.isSuccessful() && res.body() != null) {
@@ -160,7 +161,7 @@ public class LibraryFragment extends Fragment {
     
     private Playlist createLiked() {
         Playlist p = new Playlist();
-        p.setId(-1);
+        p.setId(ApiConstants.LIKED_SONGS_PLAYLIST_ID);
         p.setTitle("Liked Songs");
         p.setTrackCount(liked.size());
         p.setArtworkUrl(liked.get(0).getArtworkUrl());

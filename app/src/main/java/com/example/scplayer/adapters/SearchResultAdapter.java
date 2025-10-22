@@ -48,6 +48,14 @@ public class SearchResultAdapter extends RecyclerView.Adapter<SearchResultAdapte
         notifyDataSetChanged();
     }
 
+    public void setLikedTrackIds(List<Long> ids) {
+        this.likedTrackIds.clear();
+        if (ids != null) {
+            this.likedTrackIds.addAll(ids);
+        }
+        notifyDataSetChanged();
+    }
+
     public void addLikedTrack(long trackId) {
         if (!likedTrackIds.contains(trackId)) {
             likedTrackIds.add(trackId);
