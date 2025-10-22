@@ -123,6 +123,7 @@ public class PlaylistDetailFragment extends Fragment {
         adapter = new TrackAdapter(new TrackAdapter.OnTrackClickListener() {
             @Override
             public void onTrackClick(Track track, int pos) {
+                // PLAYING TRACK LOGIC HERE
                 Log.d("PlaylistDetail", "Playing: " + track.getTitle());
             }
 
@@ -136,22 +137,19 @@ public class PlaylistDetailFragment extends Fragment {
                     public void onResponse(Call<Void> call, Response<Void> res) {
                         if (res.isSuccessful()) {
                             Toast.makeText(getContext(), isLiked ? "Track unliked" : "Track liked!", Toast.LENGTH_SHORT).show();
-                            
-                            // Update liked state
                             if (isLiked) {
                                 likedTrackIds.remove(track.getId());
                             } else {
                                 likedTrackIds.add(track.getId());
                             }
                             
-                            // If unliked in Liked Songs playlist, remove track from list
+    
                             if (isLiked && isLikedPlaylist) {
                                 tracks.remove(pos);
                                 adapter.setTracks(tracks);
                                 showEmpty(tracks.isEmpty());
                             }
-                            
-                            // Update adapter with new liked state
+
                             adapter.setLikedTrackIds(likedTrackIds);
                         } else {
                             Toast.makeText(getContext(), "Failed (HTTP " + res.code() + ")", Toast.LENGTH_SHORT).show();
