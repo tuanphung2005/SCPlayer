@@ -37,6 +37,7 @@ public class LibraryFragment extends Fragment {
     private SoundCloudApi api;
     private PlaylistManager playlistManager;
     private List<Track> liked = new ArrayList<>();
+    private List<Playlist> cachedPlaylists = new ArrayList<>();
 
     @Nullable
     @Override
@@ -70,6 +71,12 @@ public class LibraryFragment extends Fragment {
         });
         recycler.setLayoutManager(new GridLayoutManager(getContext(), ApiConstants.PLAYLIST_GRID_COLUMNS));
         recycler.setAdapter(adapter);
+        
+        // read cached playlists
+        if (!cachedPlaylists.isEmpty()) {
+            adapter.setPlaylists(cachedPlaylists);
+            showEmpty(false);
+        }
     }
     
     private void openPlaylist(Playlist p, List<Track> tracks) {
@@ -91,23 +98,33 @@ public class LibraryFragment extends Fragment {
             @Override
             public void onResponse(Call<List<Track>> call, Response<List<Track>> res) {
                 if (res.isSuccessful() && res.body() != null) {
-                    liked = res.body();
-                    if (!liked.isEmpty()) {
-                        adapter.setPlaylists(List.of(createLiked()));
+                    List<Track> newLiked = res.body();
+                    boolean likedChanged = !isSameTracks(liked, newLiked);
+                    
+                    if (likedChanged) {
+                        liked = newLiked;
                     }
+                    loadPlaylists(likedChanged);
+                } else {
+                    loadPlaylists(false);
                 }
-                loadPlaylists();
             }
 
             @Override
             public void onFailure(Call<List<Track>> call, Throwable t) {
-                loadPlaylists();
+                loadPlaylists(false);
             }
         });
     }
 
-    private void loadPlaylists() {
-        playlistManager.loadUserPlaylists(playlists -> fetchArtwork(playlists, 0));
+    private void loadPlaylists(boolean likedChanged) {
+        playlistManager.loadUserPlaylists(playlists -> {
+            boolean playlistsChanged = !isSamePlaylists(cachedPlaylists, playlists);
+            
+            if (likedChanged || playlistsChanged) {
+                fetchArtwork(playlists, 0);
+            }
+        });
     }
     
     private void fetchArtwork(List<Playlist> playlists, int i) {
@@ -147,11 +164,12 @@ public class LibraryFragment extends Fragment {
     private void display(List<Playlist> user) {
         List<Playlist> all = new ArrayList<>();
         
-        if (adapter.getItemCount() > 0) {
+        if (!liked.isEmpty()) {
             all.add(createLiked());
         }
         
         all.addAll(user);
+        cachedPlaylists = all;
         adapter.setPlaylists(all);
         
         if (all.isEmpty()) {
@@ -166,6 +184,46 @@ public class LibraryFragment extends Fragment {
         p.setTrackCount(liked.size());
         p.setArtworkUrl(liked.get(0).getArtworkUrl());
         return p;
+    }
+
+    private boolean isSameTracks(List<Track> oldTracks, List<Track> newTracks) {
+        if (oldTracks.size() != newTracks.size()) {
+            return false;
+        }
+        
+        for (int i = 0; i < oldTracks.size(); i++) {
+            if (oldTracks.get(i).getId() != newTracks.get(i).getId()) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private boolean isSamePlaylists(List<Playlist> oldPlaylists, List<Playlist> newPlaylists) {
+        if (oldPlaylists.isEmpty()) {
+            return false;
+        }
+
+        int oldCount = oldPlaylists.size();
+        int newCount = newPlaylists.size();
+        
+        if (!liked.isEmpty()) {
+            oldCount--;
+        }
+        
+        if (oldCount != newCount) {
+            return false;
+        }
+
+        int oldIndex = liked.isEmpty() ? 0 : 1;
+        for (int i = 0; i < newPlaylists.size(); i++) {
+            if (oldIndex >= oldPlaylists.size() || 
+                oldPlaylists.get(oldIndex).getId() != newPlaylists.get(i).getId()) {
+                return false;
+            }
+            oldIndex++;
+        }
+        return true;
     }
 
     private void showEmpty(boolean show) {

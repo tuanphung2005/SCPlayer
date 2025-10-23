@@ -2,7 +2,7 @@ package com.example.scplayer.utils;
 
 public class ApiConstants {
     // API Limits
-    public static final int MAX_LIKED_TRACKS = 500;
+    public static final int MAX_LIKED_TRACKS = 50;
     public static final int DEFAULT_OFFSET = 0;
     public static final int PLAYLIST_TRACKS_LIMIT = 50;
     public static final int SEARCH_RESULTS_LIMIT = 20;
