@@ -78,4 +78,10 @@ public interface SoundCloudApi {
     
     @retrofit2.http.DELETE("likes/tracks/{track_urn}")
     Call<Void> unlikeTrack(@Path("track_urn") String trackUrn);
+    
+    @GET("tracks/{track_urn}/streams")
+    Call<com.example.scplayer.models.TrackStream> getTrackStreams(
+            @Path("track_urn") String trackUrn,
+            @Query("secret_token") String secretToken
+    );
 }

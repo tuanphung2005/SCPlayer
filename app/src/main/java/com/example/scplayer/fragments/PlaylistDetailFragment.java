@@ -122,8 +122,8 @@ public class PlaylistDetailFragment extends Fragment {
         adapter = new TrackAdapter(new TrackAdapter.OnTrackClickListener() {
             @Override
             public void onTrackClick(Track track, int pos) {
-                // PLAYING TRACK LOGIC HERE
                 Log.d("PlaylistDetail", "Playing: " + track.getTitle());
+                com.example.scplayer.utils.MiniPlayer.getInstance().setPlaylist(adapter.getTracks(), pos);
             }
 
             @Override

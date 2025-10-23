@@ -63,6 +63,10 @@ public class TrackAdapter extends RecyclerView.Adapter<TrackAdapter.ViewHolder> 
         return -1;
     }
 
+    public List<Track> getTracks() {
+        return new ArrayList<>(tracks);
+    }
+
     @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
