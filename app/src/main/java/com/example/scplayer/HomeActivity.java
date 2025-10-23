@@ -93,6 +93,9 @@ public class HomeActivity extends AppCompatActivity {
     
     private void switchFragment(Fragment fragment) {
         if (fragment != active) {
+            // clear stack
+            fm.popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
+            
             fm.beginTransaction()
                 .hide(active)
                 .show(fragment)
