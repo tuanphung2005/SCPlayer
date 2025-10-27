@@ -74,6 +74,15 @@ public class HomeFragment extends Fragment {
         fetchLatestLikedRelatedTracks();
     }
 
+    @Override
+    public void onHiddenChanged(boolean hidden) {
+        super.onHiddenChanged(hidden);
+        if (!hidden) {
+            // Fragment is now visible, refresh related tracks
+            fetchLatestLikedRelatedTracks();
+        }
+    }
+
     private void navigateToLogin() {
         Intent intent = new Intent(requireContext(), LoginActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
@@ -141,12 +150,6 @@ public class HomeFragment extends Fragment {
                 .replace(R.id.fragmentContainer, fragment)
                 .addToBackStack(null)
                 .commit();
-    }
-
-    // TrackAdapter.OnTrackClickListener
-    // Removed @Override annotations since these do not override any interface
-    public void onTrackClick(Track track, int pos) {
-        // Optionally handle track click (play, details, etc.)
     }
 
     public void onLikeClick(Track track, int pos, boolean isLiked) {
