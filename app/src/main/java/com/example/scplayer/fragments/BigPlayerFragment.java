@@ -26,7 +26,13 @@ import com.example.scplayer.playback.PlaybackService;
 import com.example.scplayer.utils.MiniPlayer;
 import com.example.scplayer.utils.TrackLikeManager;
 
-public class BigPlayerFragment extends Fragment implements MiniPlayer.StateListener, MiniPlayer.ErrorListener {
+import java.util.List;
+
+public class BigPlayerFragment extends Fragment implements 
+        MiniPlayer.StateListener, 
+        MiniPlayer.ErrorListener,
+        MiniPlayer.ShuffleRepeatListener,
+        MiniPlayer.LikeChangeListener {
 
     private ImageButton btnMinimize;
     private ImageView ivAlbumCover;
@@ -74,9 +80,30 @@ public class BigPlayerFragment extends Fragment implements MiniPlayer.StateListe
 
         initViews(view);
         setupListeners();
+        loadLikedTracks();
         updateUI();
         startSeekBarUpdate();
         hideMiniPlayer();
+    }
+
+    private void loadLikedTracks() {
+        likeManager.loadLikedTracks(50, new TrackLikeManager.LoadCallback() {
+            @Override
+            public void onLoaded(List<Long> likedTrackIds) {
+                if (getActivity() != null) {
+                    getActivity().runOnUiThread(() -> {
+                        Track track = miniPlayer.getCurrentTrack();
+                        if (track != null) {
+                            updateLikeButton(track);
+                        }
+                    });
+                }
+            }
+
+            @Override
+            public void onError(String error) {
+            }
+        });
     }
 
     private void hideMiniPlayer() {
@@ -115,8 +142,10 @@ public class BigPlayerFragment extends Fragment implements MiniPlayer.StateListe
         btnLike = view.findViewById(R.id.btnLike);
         btnShare = view.findViewById(R.id.btnShare);
         
-        btnShuffle.setAlpha(0.5f);
-        btnRepeat.setAlpha(0.5f);
+        isShuffleEnabled = miniPlayer.isShuffleEnabled();
+        isRepeatEnabled = miniPlayer.isRepeatEnabled();
+        btnShuffle.setAlpha(isShuffleEnabled ? 1.0f : 0.5f);
+        btnRepeat.setAlpha(isRepeatEnabled ? 1.0f : 0.5f);
     }
 
     private void setupListeners() {
@@ -134,11 +163,13 @@ public class BigPlayerFragment extends Fragment implements MiniPlayer.StateListe
 
         btnShuffle.setOnClickListener(v -> {
             isShuffleEnabled = !isShuffleEnabled;
+            miniPlayer.setShuffleEnabled(isShuffleEnabled);
             btnShuffle.setAlpha(isShuffleEnabled ? 1.0f : 0.5f);
         });
 
         btnRepeat.setOnClickListener(v -> {
             isRepeatEnabled = !isRepeatEnabled;
+            miniPlayer.setRepeatEnabled(isRepeatEnabled);
             btnRepeat.setAlpha(isRepeatEnabled ? 1.0f : 0.5f);
         });
 
@@ -220,6 +251,7 @@ public class BigPlayerFragment extends Fragment implements MiniPlayer.StateListe
                     getActivity().runOnUiThread(() -> {
                         isLiked = nowLiked;
                         btnLike.setImageResource(isLiked ? R.drawable.ic_heart_filled : R.drawable.ic_heart_outline);
+                        miniPlayer.notifyTrackLikeChanged(track.getId(), nowLiked);
                         Toast.makeText(getContext(), 
                             isLiked ? "Added to likes" : "Removed from likes", 
                             Toast.LENGTH_SHORT).show();
@@ -285,6 +317,31 @@ public class BigPlayerFragment extends Fragment implements MiniPlayer.StateListe
     public void onPlaybackError(String message) {
         if (getContext() != null) {
             Toast.makeText(getContext(), "Playback error: " + message, Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    @Override
+    public void onShuffleRepeatChanged(boolean shuffleEnabled, boolean repeatEnabled) {
+        if (getActivity() != null) {
+            getActivity().runOnUiThread(() -> {
+                isShuffleEnabled = shuffleEnabled;
+                isRepeatEnabled = repeatEnabled;
+                btnShuffle.setAlpha(isShuffleEnabled ? 1.0f : 0.5f);
+                btnRepeat.setAlpha(isRepeatEnabled ? 1.0f : 0.5f);
+            });
+        }
+    }
+
+    @Override
+    public void onLikeChanged(long trackId, boolean liked) {
+        Track currentTrack = miniPlayer.getCurrentTrack();
+        if (currentTrack != null && currentTrack.getId() == trackId) {
+            if (getActivity() != null) {
+                getActivity().runOnUiThread(() -> {
+                    isLiked = liked;
+                    btnLike.setImageResource(isLiked ? R.drawable.ic_heart_filled : R.drawable.ic_heart_outline);
+                });
+            }
         }
     }
 

@@ -18,7 +18,10 @@ public class MiniPlayer implements PlaybackService.PlaybackListener {
     private List<Track> playlist;
     private int currentIndex;
     private boolean isPlaying;
+    private boolean isShuffleEnabled = false;
+    private boolean isRepeatEnabled = false;
     private final List<StateListener> listeners;
+    private final List<Track> originalPlaylist;
     
     private PlaybackService playbackService;
     private boolean serviceBound = false;
@@ -54,6 +57,7 @@ public class MiniPlayer implements PlaybackService.PlaybackListener {
 
     private MiniPlayer() {
         this.playlist = new ArrayList<>();
+        this.originalPlaylist = new ArrayList<>();
         this.currentIndex = -1;
         this.isPlaying = false;
         this.listeners = new ArrayList<>();
@@ -87,10 +91,15 @@ public class MiniPlayer implements PlaybackService.PlaybackListener {
     }
 
     public void setPlaylist(List<Track> playlist, int position) {
+        this.originalPlaylist.clear();
+        this.originalPlaylist.addAll(playlist);
         this.playlist = new ArrayList<>(playlist);
+        if (isShuffleEnabled) {
+            shufflePlaylist();
+        }
         this.currentIndex = position;
-        if (position >= 0 && position < playlist.size()) {
-            playTrack(playlist.get(position));
+        if (position >= 0 && position < this.playlist.size()) {
+            playTrack(this.playlist.get(position));
         }
     }
 
@@ -110,8 +119,12 @@ public class MiniPlayer implements PlaybackService.PlaybackListener {
 
     public void next() {
         if (playlist.isEmpty()) return;
-        currentIndex = (currentIndex + 1) % playlist.size();
-        playTrack(playlist.get(currentIndex));
+        if (isRepeatEnabled) {
+            playTrack(playlist.get(currentIndex));
+        } else {
+            currentIndex = (currentIndex + 1) % playlist.size();
+            playTrack(playlist.get(currentIndex));
+        }
     }
 
     public void previous() {
@@ -121,6 +134,58 @@ public class MiniPlayer implements PlaybackService.PlaybackListener {
             currentIndex = playlist.size() - 1;
         }
         playTrack(playlist.get(currentIndex));
+    }
+
+    public void setShuffleEnabled(boolean enabled) {
+        if (isShuffleEnabled == enabled) return;
+        isShuffleEnabled = enabled;
+        
+        if (enabled) {
+            Track current = currentTrack;
+            shufflePlaylist();
+            if (current != null) {
+                for (int i = 0; i < playlist.size(); i++) {
+                    if (playlist.get(i).getId() == current.getId()) {
+                        currentIndex = i;
+                        break;
+                    }
+                }
+            }
+        } else {
+            Track current = currentTrack;
+            playlist.clear();
+            playlist.addAll(originalPlaylist);
+            if (current != null) {
+                for (int i = 0; i < playlist.size(); i++) {
+                    if (playlist.get(i).getId() == current.getId()) {
+                        currentIndex = i;
+                        break;
+                    }
+                }
+            }
+        }
+        notifyShuffleRepeatChanged();
+    }
+
+    public void setRepeatEnabled(boolean enabled) {
+        if (isRepeatEnabled == enabled) return;
+        isRepeatEnabled = enabled;
+        notifyShuffleRepeatChanged();
+    }
+
+    public boolean isShuffleEnabled() {
+        return isShuffleEnabled;
+    }
+
+    public boolean isRepeatEnabled() {
+        return isRepeatEnabled;
+    }
+
+    private void shufflePlaylist() {
+        List<Track> shuffled = new ArrayList<>(playlist);
+        java.util.Collections.shuffle(shuffled);
+        playlist.clear();
+        playlist.addAll(shuffled);
     }
 
     public Track getCurrentTrack() {
@@ -157,10 +222,35 @@ public class MiniPlayer implements PlaybackService.PlaybackListener {
         }
     }
 
+    private void notifyShuffleRepeatChanged() {
+        for (StateListener listener : listeners) {
+            if (listener instanceof ShuffleRepeatListener) {
+                ((ShuffleRepeatListener) listener).onShuffleRepeatChanged(isShuffleEnabled, isRepeatEnabled);
+            }
+        }
+    }
+
+    private void notifyLikeChanged(long trackId, boolean isLiked) {
+        for (StateListener listener : listeners) {
+            if (listener instanceof LikeChangeListener) {
+                ((LikeChangeListener) listener).onLikeChanged(trackId, isLiked);
+            }
+        }
+    }
+
+    public void notifyTrackLikeChanged(long trackId, boolean isLiked) {
+        notifyLikeChanged(trackId, isLiked);
+    }
+
     @Override
     public void onPlaybackStateChanged(boolean playing) {
         this.isPlaying = playing;
         notifyPlaybackStateChanged();
+    }
+
+    @Override
+    public void onTrackCompleted() {
+        next();
     }
 
     @Override
@@ -190,5 +280,13 @@ public class MiniPlayer implements PlaybackService.PlaybackListener {
 
     public interface ErrorListener {
         void onPlaybackError(String message);
+    }
+
+    public interface ShuffleRepeatListener {
+        void onShuffleRepeatChanged(boolean shuffleEnabled, boolean repeatEnabled);
+    }
+
+    public interface LikeChangeListener {
+        void onLikeChanged(long trackId, boolean isLiked);
     }
 }

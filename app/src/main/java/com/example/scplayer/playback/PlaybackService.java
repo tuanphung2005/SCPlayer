@@ -65,6 +65,11 @@ public class PlaybackService extends Service {
                 if (listener != null) {
                     listener.onPlaybackStateChanged(state == Player.STATE_READY && player.getPlayWhenReady());
                 }
+                
+                if (state == Player.STATE_ENDED && listener != null) {
+                    listener.onTrackCompleted();
+                }
+                
                 updateNotification();
             }
 
@@ -267,6 +272,7 @@ public class PlaybackService extends Service {
 
     public interface PlaybackListener {
         void onPlaybackStateChanged(boolean isPlaying);
+        void onTrackCompleted();
         void onError(String message);
     }
 }
