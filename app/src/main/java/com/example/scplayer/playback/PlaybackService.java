@@ -235,6 +235,16 @@ public class PlaybackService extends Service {
         return player != null && player.isPlaying();
     }
 
+    public long getCurrentPosition() {
+        return player != null ? player.getCurrentPosition() : 0;
+    }
+
+    public void seekTo(long position) {
+        if (player != null) {
+            player.seekTo(position);
+        }
+    }
+
     public void setPlaybackListener(PlaybackListener listener) {
         this.listener = listener;
     }

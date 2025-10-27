@@ -49,6 +49,14 @@ public class MiniPlayerFragment extends Fragment implements MiniPlayer.StateList
         updateUI();
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (miniPlayer.hasTrack()) {
+            miniPlayerCard.setVisibility(View.VISIBLE);
+        }
+    }
+
     private void initViews(View view) {
         miniPlayerCard = view.findViewById(R.id.miniPlayerCard);
         miniPlayerCover = view.findViewById(R.id.miniPlayerCover);
@@ -62,9 +70,40 @@ public class MiniPlayerFragment extends Fragment implements MiniPlayer.StateList
     private void setupListeners() {
         miniPlayer.addListener(this);
 
+        miniPlayerCard.setOnClickListener(v -> openBigPlayer());
+
         btnPlayPause.setOnClickListener(v -> miniPlayer.togglePlayPause());
         btnPrevious.setOnClickListener(v -> miniPlayer.previous());
         btnNext.setOnClickListener(v -> miniPlayer.next());
+    }
+
+    private void openBigPlayer() {
+        if (getActivity() != null) {
+            BigPlayerFragment bigPlayerFragment = new BigPlayerFragment();
+            getActivity().getSupportFragmentManager()
+                    .beginTransaction()
+                    .setCustomAnimations(
+                            R.anim.slide_in_bottom,
+                            R.anim.slide_out_bottom,
+                            R.anim.slide_in_bottom,
+                            R.anim.slide_out_bottom
+                    )
+                    .add(android.R.id.content, bigPlayerFragment)
+                    .addToBackStack(null)
+                    .commit();
+        }
+    }
+
+    public void hideMiniPlayer() {
+        if (miniPlayerCard != null) {
+            miniPlayerCard.setVisibility(View.GONE);
+        }
+    }
+
+    public void showMiniPlayer() {
+        if (miniPlayerCard != null && miniPlayer.hasTrack()) {
+            miniPlayerCard.setVisibility(View.VISIBLE);
+        }
     }
 
     private void updateUI() {

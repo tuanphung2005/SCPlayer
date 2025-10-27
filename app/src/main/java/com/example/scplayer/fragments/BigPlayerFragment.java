@@ -1,0 +1,299 @@
+package com.example.scplayer.fragments;
+
+import android.content.Intent;
+import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.view.WindowManager;
+import android.widget.ImageButton;
+import android.widget.ImageView;
+import android.widget.SeekBar;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.fragment.app.Fragment;
+
+import com.bumptech.glide.Glide;
+import com.example.scplayer.R;
+import com.example.scplayer.api.ApiClient;
+import com.example.scplayer.models.Track;
+import com.example.scplayer.playback.PlaybackService;
+import com.example.scplayer.utils.MiniPlayer;
+import com.example.scplayer.utils.TrackLikeManager;
+
+public class BigPlayerFragment extends Fragment implements MiniPlayer.StateListener, MiniPlayer.ErrorListener {
+
+    private ImageButton btnMinimize;
+    private ImageView ivAlbumCover;
+    private TextView tvSongTitle;
+    private TextView tvArtistName;
+    private SeekBar seekBar;
+    private TextView tvCurrentTime;
+    private TextView tvDuration;
+    private ImageButton btnShuffle;
+    private ImageButton btnPreviousBig;
+    private ImageButton btnPlayPauseBig;
+    private ImageButton btnNextBig;
+    private ImageButton btnRepeat;
+    private ImageButton btnLike;
+    private ImageButton btnShare;
+
+    private MiniPlayer miniPlayer;
+    private TrackLikeManager likeManager;
+    private Handler handler;
+    private boolean isShuffleEnabled = false;
+    private boolean isRepeatEnabled = false;
+    private boolean isLiked = false;
+
+    private final Runnable updateSeekBar = new Runnable() {
+        @Override
+        public void run() {
+            updateProgress();
+            handler.postDelayed(this, 1000);
+        }
+    };
+
+    @Nullable
+    @Override
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        return inflater.inflate(R.layout.fragment_big_player, container, false);
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+
+        miniPlayer = MiniPlayer.getInstance();
+        likeManager = new TrackLikeManager(ApiClient.getSoundCloudApi());
+        handler = new Handler(Looper.getMainLooper());
+
+        initViews(view);
+        setupListeners();
+        updateUI();
+        startSeekBarUpdate();
+        hideMiniPlayer();
+    }
+
+    private void hideMiniPlayer() {
+        if (getActivity() != null) {
+            Fragment miniPlayerFragment = getActivity().getSupportFragmentManager()
+                    .findFragmentById(R.id.miniPlayerContainer);
+            if (miniPlayerFragment instanceof MiniPlayerFragment) {
+                ((MiniPlayerFragment) miniPlayerFragment).hideMiniPlayer();
+            }
+        }
+    }
+
+    private void showMiniPlayer() {
+        if (getActivity() != null) {
+            Fragment miniPlayerFragment = getActivity().getSupportFragmentManager()
+                    .findFragmentById(R.id.miniPlayerContainer);
+            if (miniPlayerFragment instanceof MiniPlayerFragment) {
+                ((MiniPlayerFragment) miniPlayerFragment).showMiniPlayer();
+            }
+        }
+    }
+
+    private void initViews(View view) {
+        btnMinimize = view.findViewById(R.id.btnMinimize);
+        ivAlbumCover = view.findViewById(R.id.ivAlbumCover);
+        tvSongTitle = view.findViewById(R.id.tvSongTitle);
+        tvArtistName = view.findViewById(R.id.tvArtistName);
+        seekBar = view.findViewById(R.id.seekBar);
+        tvCurrentTime = view.findViewById(R.id.tvCurrentTime);
+        tvDuration = view.findViewById(R.id.tvDuration);
+        btnShuffle = view.findViewById(R.id.btnShuffle);
+        btnPreviousBig = view.findViewById(R.id.btnPreviousBig);
+        btnPlayPauseBig = view.findViewById(R.id.btnPlayPauseBig);
+        btnNextBig = view.findViewById(R.id.btnNextBig);
+        btnRepeat = view.findViewById(R.id.btnRepeat);
+        btnLike = view.findViewById(R.id.btnLike);
+        btnShare = view.findViewById(R.id.btnShare);
+        
+        btnShuffle.setAlpha(0.5f);
+        btnRepeat.setAlpha(0.5f);
+    }
+
+    private void setupListeners() {
+        miniPlayer.addListener(this);
+
+        btnMinimize.setOnClickListener(v -> {
+            if (getActivity() != null) {
+                getActivity().getSupportFragmentManager().popBackStack();
+            }
+        });
+
+        btnPlayPauseBig.setOnClickListener(v -> miniPlayer.togglePlayPause());
+        btnPreviousBig.setOnClickListener(v -> miniPlayer.previous());
+        btnNextBig.setOnClickListener(v -> miniPlayer.next());
+
+        btnShuffle.setOnClickListener(v -> {
+            isShuffleEnabled = !isShuffleEnabled;
+            btnShuffle.setAlpha(isShuffleEnabled ? 1.0f : 0.5f);
+        });
+
+        btnRepeat.setOnClickListener(v -> {
+            isRepeatEnabled = !isRepeatEnabled;
+            btnRepeat.setAlpha(isRepeatEnabled ? 1.0f : 0.5f);
+        });
+
+        btnLike.setOnClickListener(v -> toggleLike());
+
+        btnShare.setOnClickListener(v -> shareTrack());
+
+        seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                if (fromUser) {
+                    tvCurrentTime.setText(formatTime(progress));
+                }
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                PlaybackService service = miniPlayer.getPlaybackService();
+                if (service != null) {
+                    service.seekTo(seekBar.getProgress());
+                }
+            }
+        });
+    }
+
+    private void updateUI() {
+        if (miniPlayer.hasTrack()) {
+            Track track = miniPlayer.getCurrentTrack();
+            updateTrackInfo(track);
+            updatePlayPauseButton(miniPlayer.isPlaying());
+            updateLikeButton(track);
+        }
+    }
+
+    private void updateTrackInfo(Track track) {
+        if (track == null || getContext() == null) return;
+
+        tvSongTitle.setText(track.getTitle());
+        tvSongTitle.setSelected(true);
+        tvArtistName.setText(track.getUser() != null ? track.getUser().getUsername() : "Unknown Artist");
+
+        String artworkUrl = track.getHighQualityArtworkUrl();
+        if (artworkUrl != null) {
+            Glide.with(this)
+                    .load(artworkUrl)
+                    .placeholder(android.R.color.darker_gray)
+                    .into(ivAlbumCover);
+        } else {
+            ivAlbumCover.setImageResource(android.R.color.darker_gray);
+        }
+
+        long durationMs = track.getDuration();
+        seekBar.setMax((int) durationMs);
+        tvDuration.setText(formatTime(durationMs));
+    }
+
+    private void updatePlayPauseButton(boolean isPlaying) {
+        btnPlayPauseBig.setImageResource(isPlaying ? R.drawable.ic_pause : R.drawable.ic_play);
+    }
+
+    private void updateLikeButton(Track track) {
+        if (track == null) return;
+        isLiked = likeManager.isLiked(track.getId());
+        btnLike.setImageResource(isLiked ? R.drawable.ic_heart_filled : R.drawable.ic_heart_outline);
+    }
+
+    private void toggleLike() {
+        Track track = miniPlayer.getCurrentTrack();
+        if (track == null) return;
+
+        likeManager.toggleLike(track, isLiked, new TrackLikeManager.LikeCallback() {
+            @Override
+            public void onSuccess(boolean nowLiked) {
+                if (getActivity() != null) {
+                    getActivity().runOnUiThread(() -> {
+                        isLiked = nowLiked;
+                        btnLike.setImageResource(isLiked ? R.drawable.ic_heart_filled : R.drawable.ic_heart_outline);
+                        Toast.makeText(getContext(), 
+                            isLiked ? "Added to likes" : "Removed from likes", 
+                            Toast.LENGTH_SHORT).show();
+                    });
+                }
+            }
+
+            @Override
+            public void onError(int code, Throwable t) {
+                if (getContext() != null) {
+                    Toast.makeText(getContext(), "Failed to update like status", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+    }
+
+    private void shareTrack() {
+        Track track = miniPlayer.getCurrentTrack();
+        if (track == null || getContext() == null) return;
+
+        String shareText = "Check out \"" + track.getTitle() + "\" by " + 
+            (track.getUser() != null ? track.getUser().getUsername() : "Unknown Artist") + 
+            "\n" + track.getPermalinkUrl();
+
+        Intent shareIntent = new Intent(Intent.ACTION_SEND);
+        shareIntent.setType("text/plain");
+        shareIntent.putExtra(Intent.EXTRA_TEXT, shareText);
+        startActivity(Intent.createChooser(shareIntent, "Share track"));
+    }
+
+    private void startSeekBarUpdate() {
+        handler.post(updateSeekBar);
+    }
+
+    private void updateProgress() {
+        PlaybackService service = miniPlayer.getPlaybackService();
+        if (service != null && service.isPlaying()) {
+            long currentPosition = service.getCurrentPosition();
+            seekBar.setProgress((int) currentPosition);
+            tvCurrentTime.setText(formatTime(currentPosition));
+        }
+    }
+
+    private String formatTime(long milliseconds) {
+        int seconds = (int) (milliseconds / 1000);
+        int minutes = seconds / 60;
+        seconds = seconds % 60;
+        return String.format("%d:%02d", minutes, seconds);
+    }
+
+    @Override
+    public void onTrackChanged(Track track) {
+        updateTrackInfo(track);
+        updateLikeButton(track);
+    }
+
+    @Override
+    public void onPlaybackStateChanged(boolean isPlaying) {
+        updatePlayPauseButton(isPlaying);
+    }
+
+    @Override
+    public void onPlaybackError(String message) {
+        if (getContext() != null) {
+            Toast.makeText(getContext(), "Playback error: " + message, Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        miniPlayer.removeListener(this);
+        handler.removeCallbacks(updateSeekBar);
+        showMiniPlayer();
+        
+    }
+}

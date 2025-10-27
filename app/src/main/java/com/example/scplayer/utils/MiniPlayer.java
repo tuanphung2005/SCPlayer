@@ -179,6 +179,10 @@ public class MiniPlayer implements PlaybackService.PlaybackListener {
         }
     }
 
+    public PlaybackService getPlaybackService() {
+        return playbackService;
+    }
+
     public interface StateListener {
         void onTrackChanged(Track track);
         void onPlaybackStateChanged(boolean isPlaying);
