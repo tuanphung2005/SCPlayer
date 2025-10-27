@@ -114,6 +114,10 @@ public class HomeFragment extends Fragment {
                     relatedPlaylist.setTitle("Related");
                     relatedPlaylist.setTracks(related);
                     relatedPlaylist.setTrackCount(related.size());
+                    // Set artwork to first track's artwork if available
+                    if (related != null && !related.isEmpty() && related.get(0).getArtworkUrl() != null) {
+                        relatedPlaylist.setArtworkUrl(related.get(0).getArtworkUrl());
+                    }
                     // Show as a single playlist card
                     List<Playlist> playlists = new ArrayList<>();
                     playlists.add(relatedPlaylist);
