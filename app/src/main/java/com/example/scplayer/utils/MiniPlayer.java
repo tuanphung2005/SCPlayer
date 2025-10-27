@@ -94,11 +94,13 @@ public class MiniPlayer implements PlaybackService.PlaybackListener {
         this.originalPlaylist.clear();
         this.originalPlaylist.addAll(playlist);
 
-        // If user provided a specific position (explicit selection), disable shuffle so
-        // the selected index maps correctly to the given list order. This avoids
-        // playing a different track than the user tapped when shuffle was previously on.
-        if (position >= 0 && isShuffleEnabled) {
+        // If user provided a specific position (explicit selection), disable shuffle and repeat
+        // so the selected index maps correctly to the given list order and doesn't just repeat.
+        // This avoids playing a different track than the user tapped when shuffle was previously on,
+        // and prevents repeat mode from interfering with playlist navigation.
+        if (position >= 0 && (isShuffleEnabled || isRepeatEnabled)) {
             isShuffleEnabled = false;
+            isRepeatEnabled = false;
             notifyShuffleRepeatChanged();
         }
 
