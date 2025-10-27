@@ -31,7 +31,9 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-public class PlaylistDetailFragment extends Fragment {
+public class PlaylistDetailFragment extends Fragment implements 
+    com.example.scplayer.utils.MiniPlayer.StateListener,
+    com.example.scplayer.utils.MiniPlayer.LikeChangeListener {
 
     private static final String ARG_PLAYLIST = "playlist";
     private static final String ARG_TRACKS = "tracks";
@@ -76,6 +78,8 @@ public class PlaylistDetailFragment extends Fragment {
         setupRecycler();
         loadLikedTracks();
         loadTracks();
+
+        com.example.scplayer.utils.MiniPlayer.getInstance().addListener(this);
     }
 
     private void initViews(View view) {
@@ -193,5 +197,28 @@ public class PlaylistDetailFragment extends Fragment {
 
     private void showEmpty(boolean show) {
         empty.setVisibility(show ? View.VISIBLE : View.GONE);
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        com.example.scplayer.utils.MiniPlayer.getInstance().removeListener(this);
+    }
+
+    @Override
+    public void onTrackChanged(Track track) {
+        // no-op
+    }
+
+    @Override
+    public void onPlaybackStateChanged(boolean isPlaying) {
+        // no-op
+    }
+
+    @Override
+    public void onLikeChanged(long trackId, boolean isLiked) {
+        if (adapter != null) {
+            if (isLiked) adapter.addLikedTrack(trackId); else adapter.removeLikedTrack(trackId);
+        }
     }
 }

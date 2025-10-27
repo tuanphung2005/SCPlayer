@@ -93,10 +93,20 @@ public class MiniPlayer implements PlaybackService.PlaybackListener {
     public void setPlaylist(List<Track> playlist, int position) {
         this.originalPlaylist.clear();
         this.originalPlaylist.addAll(playlist);
+
+        // If user provided a specific position (explicit selection), disable shuffle so
+        // the selected index maps correctly to the given list order. This avoids
+        // playing a different track than the user tapped when shuffle was previously on.
+        if (position >= 0 && isShuffleEnabled) {
+            isShuffleEnabled = false;
+            notifyShuffleRepeatChanged();
+        }
+
         this.playlist = new ArrayList<>(playlist);
         if (isShuffleEnabled) {
             shufflePlaylist();
         }
+
         this.currentIndex = position;
         if (position >= 0 && position < this.playlist.size()) {
             playTrack(this.playlist.get(position));
@@ -139,6 +149,10 @@ public class MiniPlayer implements PlaybackService.PlaybackListener {
     public void setShuffleEnabled(boolean enabled) {
         if (isShuffleEnabled == enabled) return;
         isShuffleEnabled = enabled;
+        // Enabling shuffle should disable repeat to avoid conflicting modes.
+        if (enabled && isRepeatEnabled) {
+            isRepeatEnabled = false;
+        }
         
         if (enabled) {
             Track current = currentTrack;
@@ -170,6 +184,10 @@ public class MiniPlayer implements PlaybackService.PlaybackListener {
     public void setRepeatEnabled(boolean enabled) {
         if (isRepeatEnabled == enabled) return;
         isRepeatEnabled = enabled;
+        // Enabling repeat should disable shuffle mode to avoid conflicts.
+        if (enabled && isShuffleEnabled) {
+            isShuffleEnabled = false;
+        }
         notifyShuffleRepeatChanged();
     }
 

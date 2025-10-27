@@ -34,7 +34,9 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-public class SearchFragment extends Fragment implements SearchResultAdapter.OnTrackClickListener {
+public class SearchFragment extends Fragment implements SearchResultAdapter.OnTrackClickListener,
+    com.example.scplayer.utils.MiniPlayer.StateListener,
+    com.example.scplayer.utils.MiniPlayer.LikeChangeListener {
 
     private EditText input;
     private ImageButton clear;
@@ -70,6 +72,9 @@ public class SearchFragment extends Fragment implements SearchResultAdapter.OnTr
         adapter = new SearchResultAdapter(this);
         results.setLayoutManager(new LinearLayoutManager(getContext()));
         results.setAdapter(adapter);
+
+        // Register to receive like-change events from the MiniPlayer
+        com.example.scplayer.utils.MiniPlayer.getInstance().addListener(this);
 
         api = ApiClient.getSoundCloudApi();
         likeManager = new TrackLikeManager(api);
@@ -199,5 +204,23 @@ public class SearchFragment extends Fragment implements SearchResultAdapter.OnTr
     public void onDestroyView() {
         super.onDestroyView();
         handler.removeCallbacks(runnable);
+        com.example.scplayer.utils.MiniPlayer.getInstance().removeListener(this);
+    }
+
+    @Override
+    public void onTrackChanged(Track track) {
+        // not used in search
+    }
+
+    @Override
+    public void onPlaybackStateChanged(boolean isPlaying) {
+        // not used in search
+    }
+
+    @Override
+    public void onLikeChanged(long trackId, boolean isLiked) {
+        if (adapter != null) {
+            if (isLiked) adapter.addLikedTrack(trackId); else adapter.removeLikedTrack(trackId);
+        }
     }
 }
