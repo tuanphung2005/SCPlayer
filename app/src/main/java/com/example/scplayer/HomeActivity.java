@@ -28,9 +28,7 @@ public class HomeActivity extends AppCompatActivity {
     private final ActivityResultLauncher<String> requestPermissionLauncher =
             registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
                 if (isGranted) {
-                    // Permission granted
                 } else {
-                    // Permission denied - notifications won't work
                 }
             });
 

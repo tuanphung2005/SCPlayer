@@ -54,6 +54,21 @@ public class LibraryFragment extends Fragment {
         loadLibraryData();
     }
 
+    // refresh on resume/hidden change fix
+    @Override
+    public void onResume() {
+        super.onResume();
+        loadLibraryData();
+    }
+
+    @Override
+    public void onHiddenChanged(boolean hidden) {
+        super.onHiddenChanged(hidden);
+        if (!hidden) {
+            loadLibraryData();
+        }
+    }
+
     private void initializeViews(View view) {
         recycler = view.findViewById(R.id.playlistsRecycler);
         empty = view.findViewById(R.id.empty);
