@@ -1,5 +1,6 @@
 package com.example.scplayer.models;
 
+import com.example.scplayer.utils.ImageUtils;
 import com.google.gson.annotations.SerializedName;
 import java.io.Serializable;
 
@@ -159,9 +160,6 @@ public class Track implements Serializable {
     }
     
     public String getHighQualityArtworkUrl() {
-        if (artworkUrl != null) {
-            return artworkUrl.replace("large", "t500x500");
-        }
-        return null;
+        return ImageUtils.getHighQualityArtworkUrl(artworkUrl);
     }
 }

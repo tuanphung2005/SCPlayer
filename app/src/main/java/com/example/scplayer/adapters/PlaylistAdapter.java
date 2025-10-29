@@ -12,6 +12,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.example.scplayer.R;
 import com.example.scplayer.models.Playlist;
+import com.example.scplayer.utils.ImageUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -73,12 +74,8 @@ public class PlaylistAdapter extends RecyclerView.Adapter<PlaylistAdapter.Playli
             artwork.setBackgroundColor(0x00000000);
             artwork.setPadding(0, 0, 0, 0);
             
-            String artworkUrl = playlist.getArtworkUrl();
+            String artworkUrl = ImageUtils.getMediumQualityArtworkUrl(playlist.getArtworkUrl());
             if (artworkUrl != null && !artworkUrl.isEmpty()) {
-                artworkUrl = artworkUrl.replace("large", "t300x300");
-                artworkUrl = artworkUrl.replace("t500x500", "t300x300");
-                artworkUrl = artworkUrl.replace("t250x250", "t300x300");
-                
                 Glide.with(itemView.getContext())
                         .load(artworkUrl)
                         .placeholder(R.drawable.ic_library)
