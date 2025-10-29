@@ -10,7 +10,8 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:background="@color/white">
 
         <ImageView
             android:id="@+id/playlistArtwork"
@@ -19,12 +20,13 @@
             android:layout_weight="1"
             android:adjustViewBounds="true"
             android:scaleType="centerCrop"
-            android:background="#F5F5F5"
-            android:contentDescription="Playlist artwork" />
+            android:background="@color/white"
+            android:contentDescription="artwork" />
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:background="@color/sc_orange_secondary"
             android:orientation="vertical"
             android:padding="8dp">
 
@@ -32,12 +34,12 @@
                 android:id="@+id/playlistTitle"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Playlist Title"
-                android:textSize="14sp"
-                android:textStyle="bold"
-                android:textColor="#000000"
+                android:ellipsize="end"
                 android:maxLines="2"
-                android:ellipsize="end" />
+                android:text="Playlist Title"
+                android:textColor="#000000"
+                android:textSize="14sp"
+                android:textStyle="bold" />
 
             <TextView
                 android:id="@+id/playlistTrackCount"
@@ -45,8 +47,8 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="2dp"
                 android:text="0 tracks"
-                android:textSize="12sp"
-                android:textColor="#666666" />
+                android:textColor="#666666"
+                android:textSize="12sp" />
 
         </LinearLayout>
 
