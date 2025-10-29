@@ -21,6 +21,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.scplayer.R;
+import com.example.scplayer.adapters.BaseTrackAdapter;
 import com.example.scplayer.adapters.SearchResultAdapter;
 import com.example.scplayer.api.ApiClient;
 import com.example.scplayer.api.SoundCloudApi;
@@ -34,20 +35,22 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-public class SearchFragment extends Fragment implements SearchResultAdapter.OnTrackClickListener,
-    com.example.scplayer.utils.MiniPlayer.StateListener,
-    com.example.scplayer.utils.MiniPlayer.LikeChangeListener {
+public class SearchFragment extends BaseTrackFragment implements SearchResultAdapter.OnTrackClickListener {
 
     private EditText input;
     private ImageButton clear;
     private RecyclerView results;
     private LinearLayout empty;
     private SearchResultAdapter adapter;
-    private SoundCloudApi api;
-    private TrackLikeManager likeManager;
 
     private Handler handler = new Handler(Looper.getMainLooper());
     private Runnable runnable;
+
+    @Nullable
+    @Override
+    protected BaseTrackAdapter getAdapter() {
+        return adapter;
+    }
 
     @Nullable
     @Override
@@ -73,26 +76,9 @@ public class SearchFragment extends Fragment implements SearchResultAdapter.OnTr
         results.setLayoutManager(new LinearLayoutManager(getContext()));
         results.setAdapter(adapter);
 
-        // Register to receive like-change events from the MiniPlayer
-        com.example.scplayer.utils.MiniPlayer.getInstance().addListener(this);
-
-        api = ApiClient.getSoundCloudApi();
-        likeManager = new TrackLikeManager(api);
-        
+        initializeLikeManagement();
+        registerMiniPlayerListener();
         loadLikedTracks();
-    }
-
-    private void loadLikedTracks() {
-        likeManager.loadLikedTracks(ApiConstants.MAX_LIKED_TRACKS, new TrackLikeManager.LoadCallback() {
-            @Override
-            public void onLoaded(List<Long> likedTrackIds) {
-                adapter.setLikedTrackIds(likedTrackIds);
-            }
-
-            @Override
-            public void onError(String error) {
-            }
-        });
     }
 
     private void setupSearch() {
@@ -204,23 +190,9 @@ public class SearchFragment extends Fragment implements SearchResultAdapter.OnTr
     public void onDestroyView() {
         super.onDestroyView();
         handler.removeCallbacks(runnable);
-        com.example.scplayer.utils.MiniPlayer.getInstance().removeListener(this);
     }
 
-    @Override
-    public void onTrackChanged(Track track) {
-        // not used in search
-    }
-
-    @Override
-    public void onPlaybackStateChanged(boolean isPlaying) {
-        // not used in search
-    }
-
-    @Override
-    public void onLikeChanged(long trackId, boolean isLiked) {
-        if (adapter != null) {
-            if (isLiked) adapter.addLikedTrack(trackId); else adapter.removeLikedTrack(trackId);
-        }
+    public void onTrackClick(int position) {
+        com.example.scplayer.utils.MiniPlayer.getInstance().setPlaylist(adapter.getTracks(), position);
     }
 }

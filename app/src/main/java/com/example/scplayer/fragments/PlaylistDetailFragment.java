@@ -16,6 +16,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.scplayer.R;
+import com.example.scplayer.adapters.BaseTrackAdapter;
 import com.example.scplayer.adapters.TrackAdapter;
 import com.example.scplayer.api.ApiClient;
 import com.example.scplayer.api.SoundCloudApi;
@@ -31,9 +32,7 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-public class PlaylistDetailFragment extends Fragment implements 
-    com.example.scplayer.utils.MiniPlayer.StateListener,
-    com.example.scplayer.utils.MiniPlayer.LikeChangeListener {
+public class PlaylistDetailFragment extends BaseTrackFragment {
 
     private static final String ARG_PLAYLIST = "playlist";
     private static final String ARG_TRACKS = "tracks";
@@ -43,12 +42,16 @@ public class PlaylistDetailFragment extends Fragment implements
     private TextView titleView;
     private ImageButton btnBack;
     private TrackAdapter adapter;
-    private SoundCloudApi api;
-    private TrackLikeManager likeManager;
     
     private Playlist playlist;
     private List<Track> tracks;
     private List<Long> likedTrackIds = new ArrayList<>();
+
+    @Nullable
+    @Override
+    protected BaseTrackAdapter getAdapter() {
+        return adapter;
+    }
 
     public static PlaylistDetailFragment newInstance(Playlist playlist, List<Track> tracks) {
         PlaylistDetailFragment fragment = new PlaylistDetailFragment();
@@ -75,11 +78,11 @@ public class PlaylistDetailFragment extends Fragment implements
         }
 
         initViews(view);
+        initializeLikeManagement();
+        registerMiniPlayerListener();
         setupRecycler();
         loadLikedTracks();
         loadTracks();
-
-        com.example.scplayer.utils.MiniPlayer.getInstance().addListener(this);
     }
 
     private void initViews(View view) {
@@ -87,9 +90,6 @@ public class PlaylistDetailFragment extends Fragment implements
         empty = view.findViewById(R.id.empty);
         titleView = view.findViewById(R.id.playlistTitle);
         btnBack = view.findViewById(R.id.btnBack);
-
-        api = ApiClient.getSoundCloudApi();
-        likeManager = new TrackLikeManager(api);
         
         if (playlist != null) {
             titleView.setText(playlist.getTitle());
@@ -102,21 +102,10 @@ public class PlaylistDetailFragment extends Fragment implements
         });
     }
 
-    private void loadLikedTracks() {
-        likeManager.loadLikedTracks(ApiConstants.MAX_LIKED_TRACKS, new TrackLikeManager.LoadCallback() {
-            @Override
-            public void onLoaded(List<Long> ids) {
-                likedTrackIds = ids;
-                if (adapter != null) {
-                    adapter.setLikedTrackIds(likedTrackIds);
-                }
-            }
-
-            @Override
-            public void onError(String error) {
-                Log.e("PlaylistDetail", "Failed to load liked tracks: " + error);
-            }
-        });
+    @Override
+    protected void onLikedTracksLoaded(List<Long> likedTrackIds) {
+        this.likedTrackIds = likedTrackIds;
+        super.onLikedTracksLoaded(likedTrackIds);
     }
 
     private void setupRecycler() {
@@ -197,28 +186,5 @@ public class PlaylistDetailFragment extends Fragment implements
 
     private void showEmpty(boolean show) {
         empty.setVisibility(show ? View.VISIBLE : View.GONE);
-    }
-
-    @Override
-    public void onDestroyView() {
-        super.onDestroyView();
-        com.example.scplayer.utils.MiniPlayer.getInstance().removeListener(this);
-    }
-
-    @Override
-    public void onTrackChanged(Track track) {
-        // no-op
-    }
-
-    @Override
-    public void onPlaybackStateChanged(boolean isPlaying) {
-        // no-op
-    }
-
-    @Override
-    public void onLikeChanged(long trackId, boolean isLiked) {
-        if (adapter != null) {
-            if (isLiked) adapter.addLikedTrack(trackId); else adapter.removeLikedTrack(trackId);
-        }
     }
 }
