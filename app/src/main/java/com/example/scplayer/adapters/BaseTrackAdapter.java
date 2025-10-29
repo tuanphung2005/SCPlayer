@@ -13,6 +13,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.example.scplayer.R;
 import com.example.scplayer.models.Track;
+import com.example.scplayer.utils.TimeUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -109,7 +110,7 @@ public abstract class BaseTrackAdapter extends RecyclerView.Adapter<BaseTrackAda
         public void bind(Track track, OnTrackClickListener listener, boolean isLiked) {
             title.setText(track.getTitle());
             artist.setText(track.getUser() != null ? track.getUser().getUsername() : "Unknown Artist");
-            duration.setText(formatDuration(track.getDuration()));
+            duration.setText(TimeUtils.formatDuration(track.getDuration()));
 
             String artwork = track.getHighQualityArtworkUrl();
             if (artwork != null && !artwork.isEmpty()) {
@@ -134,13 +135,6 @@ public abstract class BaseTrackAdapter extends RecyclerView.Adapter<BaseTrackAda
                     listener.onLikeClick(track, getAdapterPosition(), isLiked);
                 }
             });
-        }
-
-        private String formatDuration(long ms) {
-            long seconds = ms / 1000;
-            long minutes = seconds / 60;
-            seconds = seconds % 60;
-            return String.format("%d:%02d", minutes, seconds);
         }
     }
 }
