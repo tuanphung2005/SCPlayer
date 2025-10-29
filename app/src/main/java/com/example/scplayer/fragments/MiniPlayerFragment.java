@@ -16,6 +16,7 @@ import androidx.fragment.app.Fragment;
 import com.bumptech.glide.Glide;
 import com.example.scplayer.R;
 import com.example.scplayer.models.Track;
+import com.example.scplayer.utils.ImageUtils;
 import com.example.scplayer.utils.MiniPlayer;
 
 import android.widget.Toast;
@@ -78,30 +79,26 @@ public class MiniPlayerFragment extends Fragment implements MiniPlayer.StateList
     }
 
     private void openBigPlayer() {
-        if (getActivity() != null) {
-            BigPlayerFragment bigPlayerFragment = new BigPlayerFragment();
-            getActivity().getSupportFragmentManager()
-                    .beginTransaction()
-                    .setCustomAnimations(
-                            R.anim.slide_in_bottom,
-                            R.anim.slide_out_bottom,
-                            R.anim.slide_in_bottom,
-                            R.anim.slide_out_bottom
-                    )
-                    .add(android.R.id.content, bigPlayerFragment)
-                    .addToBackStack(null)
-                    .commit();
-        }
+        BigPlayerFragment bigPlayerFragment = new BigPlayerFragment();
+        requireActivity().getSupportFragmentManager()
+                .beginTransaction()
+                .setCustomAnimations(
+                        R.anim.slide_in_bottom,
+                        R.anim.slide_out_bottom,
+                        R.anim.slide_in_bottom,
+                        R.anim.slide_out_bottom
+                )
+                .add(android.R.id.content, bigPlayerFragment)
+                .addToBackStack(null)
+                .commit();
     }
 
     public void hideMiniPlayer() {
-        if (miniPlayerCard != null) {
-            miniPlayerCard.setVisibility(View.GONE);
-        }
+        miniPlayerCard.setVisibility(View.GONE);
     }
 
     public void showMiniPlayer() {
-        if (miniPlayerCard != null && miniPlayer.hasTrack()) {
+        if (miniPlayer.hasTrack()) {
             miniPlayerCard.setVisibility(View.VISIBLE);
         }
     }
@@ -118,7 +115,6 @@ public class MiniPlayerFragment extends Fragment implements MiniPlayer.StateList
 
     @Override
     public void onTrackChanged(Track track) {
-        if (miniPlayerCard == null) return;
         updateMiniPlayer(track);
         if (miniPlayerCard.getVisibility() != View.VISIBLE) {
             miniPlayerCard.setVisibility(View.VISIBLE);
@@ -127,7 +123,6 @@ public class MiniPlayerFragment extends Fragment implements MiniPlayer.StateList
 
     @Override
     public void onPlaybackStateChanged(boolean isPlaying) {
-        if (btnPlayPause == null) return;
         updatePlayPauseButton(isPlaying);
     }
 
@@ -137,15 +132,7 @@ public class MiniPlayerFragment extends Fragment implements MiniPlayer.StateList
         miniPlayerTitle.setText(track.getTitle());
         miniPlayerArtist.setText(track.getUser() != null ? track.getUser().getUsername() : "Unknown Artist");
 
-        String artworkUrl = track.getHighQualityArtworkUrl();
-        if (artworkUrl != null) {
-            Glide.with(this)
-                    .load(artworkUrl)
-                    .placeholder(android.R.color.darker_gray)
-                    .into(miniPlayerCover);
-        } else {
-            miniPlayerCover.setImageResource(android.R.color.darker_gray);
-        }
+        ImageUtils.loadArtwork(requireContext(), track.getHighQualityArtworkUrl(), miniPlayerCover);
     }
 
     private void updatePlayPauseButton(boolean isPlaying) {
@@ -154,9 +141,7 @@ public class MiniPlayerFragment extends Fragment implements MiniPlayer.StateList
 
     @Override
     public void onPlaybackError(String message) {
-        if (getContext() != null) {
-            Toast.makeText(getContext(), "Playback error: " + message, Toast.LENGTH_SHORT).show();
-        }
+        Toast.makeText(requireContext(), "Playback error: " + message, Toast.LENGTH_SHORT).show();
     }
 
     @Override

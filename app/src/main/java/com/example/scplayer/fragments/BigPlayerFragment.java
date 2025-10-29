@@ -23,7 +23,9 @@ import com.example.scplayer.R;
 import com.example.scplayer.api.ApiClient;
 import com.example.scplayer.models.Track;
 import com.example.scplayer.playback.PlaybackService;
+import com.example.scplayer.utils.ImageUtils;
 import com.example.scplayer.utils.MiniPlayer;
+import com.example.scplayer.utils.TimeUtils;
 import com.example.scplayer.utils.TrackLikeManager;
 
 import java.util.List;
@@ -90,14 +92,12 @@ public class BigPlayerFragment extends Fragment implements
         likeManager.loadLikedTracks(50, new TrackLikeManager.LoadCallback() {
             @Override
             public void onLoaded(List<Long> likedTrackIds) {
-                if (getActivity() != null) {
-                    getActivity().runOnUiThread(() -> {
-                        Track track = miniPlayer.getCurrentTrack();
-                        if (track != null) {
-                            updateLikeButton(track);
-                        }
-                    });
-                }
+                requireActivity().runOnUiThread(() -> {
+                    Track track = miniPlayer.getCurrentTrack();
+                    if (track != null) {
+                        updateLikeButton(track);
+                    }
+                });
             }
 
             @Override
@@ -107,22 +107,18 @@ public class BigPlayerFragment extends Fragment implements
     }
 
     private void hideMiniPlayer() {
-        if (getActivity() != null) {
-            Fragment miniPlayerFragment = getActivity().getSupportFragmentManager()
-                    .findFragmentById(R.id.miniPlayerContainer);
-            if (miniPlayerFragment instanceof MiniPlayerFragment) {
-                ((MiniPlayerFragment) miniPlayerFragment).hideMiniPlayer();
-            }
+        Fragment miniPlayerFragment = requireActivity().getSupportFragmentManager()
+                .findFragmentById(R.id.miniPlayerContainer);
+        if (miniPlayerFragment instanceof MiniPlayerFragment) {
+            ((MiniPlayerFragment) miniPlayerFragment).hideMiniPlayer();
         }
     }
 
     private void showMiniPlayer() {
-        if (getActivity() != null) {
-            Fragment miniPlayerFragment = getActivity().getSupportFragmentManager()
-                    .findFragmentById(R.id.miniPlayerContainer);
-            if (miniPlayerFragment instanceof MiniPlayerFragment) {
-                ((MiniPlayerFragment) miniPlayerFragment).showMiniPlayer();
-            }
+        Fragment miniPlayerFragment = requireActivity().getSupportFragmentManager()
+                .findFragmentById(R.id.miniPlayerContainer);
+        if (miniPlayerFragment instanceof MiniPlayerFragment) {
+            ((MiniPlayerFragment) miniPlayerFragment).showMiniPlayer();
         }
     }
 
@@ -152,9 +148,7 @@ public class BigPlayerFragment extends Fragment implements
         miniPlayer.addListener(this);
 
         btnMinimize.setOnClickListener(v -> {
-            if (getActivity() != null) {
-                getActivity().getSupportFragmentManager().popBackStack();
-            }
+            requireActivity().getSupportFragmentManager().popBackStack();
         });
 
         btnPlayPauseBig.setOnClickListener(v -> miniPlayer.togglePlayPause());
@@ -181,7 +175,7 @@ public class BigPlayerFragment extends Fragment implements
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 if (fromUser) {
-                    tvCurrentTime.setText(formatTime(progress));
+                    tvCurrentTime.setText(TimeUtils.formatDuration(progress));
                 }
             }
 
@@ -215,19 +209,11 @@ public class BigPlayerFragment extends Fragment implements
         tvSongTitle.setSelected(true);
         tvArtistName.setText(track.getUser() != null ? track.getUser().getUsername() : "Unknown Artist");
 
-        String artworkUrl = track.getHighQualityArtworkUrl();
-        if (artworkUrl != null) {
-            Glide.with(this)
-                    .load(artworkUrl)
-                    .placeholder(android.R.color.darker_gray)
-                    .into(ivAlbumCover);
-        } else {
-            ivAlbumCover.setImageResource(android.R.color.darker_gray);
-        }
+        ImageUtils.loadArtwork(requireContext(), track.getHighQualityArtworkUrl(), ivAlbumCover);
 
         long durationMs = track.getDuration();
         seekBar.setMax((int) durationMs);
-        tvDuration.setText(formatTime(durationMs));
+        tvDuration.setText(TimeUtils.formatDuration(durationMs));
     }
 
     private void updatePlayPauseButton(boolean isPlaying) {
@@ -247,23 +233,19 @@ public class BigPlayerFragment extends Fragment implements
         likeManager.toggleLike(track, isLiked, new TrackLikeManager.LikeCallback() {
             @Override
             public void onSuccess(boolean nowLiked) {
-                if (getActivity() != null) {
-                    getActivity().runOnUiThread(() -> {
-                        isLiked = nowLiked;
-                        btnLike.setImageResource(isLiked ? R.drawable.ic_heart_filled : R.drawable.ic_heart_outline);
-                        miniPlayer.notifyTrackLikeChanged(track.getId(), nowLiked);
-                        Toast.makeText(getContext(), 
-                            isLiked ? "Added to likes" : "Removed from likes", 
-                            Toast.LENGTH_SHORT).show();
-                    });
-                }
+                requireActivity().runOnUiThread(() -> {
+                    isLiked = nowLiked;
+                    btnLike.setImageResource(isLiked ? R.drawable.ic_heart_filled : R.drawable.ic_heart_outline);
+                    miniPlayer.notifyTrackLikeChanged(track.getId(), nowLiked);
+                    Toast.makeText(getContext(), 
+                        isLiked ? "Added to likes" : "Removed from likes", 
+                        Toast.LENGTH_SHORT).show();
+                });
             }
 
             @Override
             public void onError(int code, Throwable t) {
-                if (getContext() != null) {
-                    Toast.makeText(getContext(), "Failed to update like status", Toast.LENGTH_SHORT).show();
-                }
+                Toast.makeText(requireContext(), "Failed to update like status", Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -291,15 +273,8 @@ public class BigPlayerFragment extends Fragment implements
         if (service != null && service.isPlaying()) {
             long currentPosition = service.getCurrentPosition();
             seekBar.setProgress((int) currentPosition);
-            tvCurrentTime.setText(formatTime(currentPosition));
+            tvCurrentTime.setText(TimeUtils.formatDuration(currentPosition));
         }
-    }
-
-    private String formatTime(long milliseconds) {
-        int seconds = (int) (milliseconds / 1000);
-        int minutes = seconds / 60;
-        seconds = seconds % 60;
-        return String.format("%d:%02d", minutes, seconds);
     }
 
     @Override
@@ -315,33 +290,27 @@ public class BigPlayerFragment extends Fragment implements
 
     @Override
     public void onPlaybackError(String message) {
-        if (getContext() != null) {
-            Toast.makeText(getContext(), "Playback error: " + message, Toast.LENGTH_SHORT).show();
-        }
+        Toast.makeText(requireContext(), "Playback error: " + message, Toast.LENGTH_SHORT).show();
     }
 
     @Override
     public void onShuffleRepeatChanged(boolean shuffleEnabled, boolean repeatEnabled) {
-        if (getActivity() != null) {
-            getActivity().runOnUiThread(() -> {
-                isShuffleEnabled = shuffleEnabled;
-                isRepeatEnabled = repeatEnabled;
-                btnShuffle.setAlpha(isShuffleEnabled ? 1.0f : 0.5f);
-                btnRepeat.setAlpha(isRepeatEnabled ? 1.0f : 0.5f);
-            });
-        }
+        requireActivity().runOnUiThread(() -> {
+            isShuffleEnabled = shuffleEnabled;
+            isRepeatEnabled = repeatEnabled;
+            btnShuffle.setAlpha(isShuffleEnabled ? 1.0f : 0.5f);
+            btnRepeat.setAlpha(isRepeatEnabled ? 1.0f : 0.5f);
+        });
     }
 
     @Override
     public void onLikeChanged(long trackId, boolean liked) {
         Track currentTrack = miniPlayer.getCurrentTrack();
         if (currentTrack != null && currentTrack.getId() == trackId) {
-            if (getActivity() != null) {
-                getActivity().runOnUiThread(() -> {
-                    isLiked = liked;
-                    btnLike.setImageResource(isLiked ? R.drawable.ic_heart_filled : R.drawable.ic_heart_outline);
-                });
-            }
+            requireActivity().runOnUiThread(() -> {
+                isLiked = liked;
+                btnLike.setImageResource(isLiked ? R.drawable.ic_heart_filled : R.drawable.ic_heart_outline);
+            });
         }
     }
 

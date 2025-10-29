@@ -40,7 +40,6 @@ public class HomeFragment extends Fragment {
 
     private AuthManager auth;
     private PlaylistAdapter adapter;
-    private TrackLikeManager likeManager;
     private Playlist relatedPlaylist;
 
     @Nullable
@@ -117,11 +116,11 @@ public class HomeFragment extends Fragment {
                     relatedPlaylist.setTitle("Related");
                     relatedPlaylist.setTracks(related);
                     relatedPlaylist.setTrackCount(related.size());
-                    // Set artwork to first track's artwork if available
+                    // set artwork to first track's artwork if available
                     if (related != null && !related.isEmpty() && related.get(0).getArtworkUrl() != null) {
                         relatedPlaylist.setArtworkUrl(related.get(0).getArtworkUrl());
                     }
-                    // Show as a single playlist card
+                    // show as a single playlist card
                     List<Playlist> playlists = new ArrayList<>();
                     playlists.add(relatedPlaylist);
                     adapter.setPlaylists(playlists);
@@ -144,16 +143,5 @@ public class HomeFragment extends Fragment {
                 .replace(R.id.fragmentContainer, fragment)
                 .addToBackStack(null)
                 .commit();
-    }
-
-    public void onLikeClick(Track track, int pos, boolean isLiked) {
-        likeManager.toggleLike(track, isLiked, new TrackLikeManager.LikeCallback() {
-            public void onSuccess(boolean nowLiked) {
-                // Like state is managed in PlaylistDetailFragment
-            }
-            public void onError(int code, Throwable t) {
-                Toast.makeText(requireContext(), "Failed to update like", Toast.LENGTH_SHORT).show();
-            }
-        });
     }
 }
