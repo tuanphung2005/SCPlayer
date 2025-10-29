@@ -11,6 +11,7 @@ import com.example.scplayer.api.ApiClient;
 import com.example.scplayer.api.SoundCloudApi;
 import com.example.scplayer.auth.AuthManager;
 import com.example.scplayer.models.SearchResponse;
+import com.example.scplayer.utils.NavigationHelper;
 import com.google.android.material.textfield.TextInputEditText;
 
 import java.util.List;
@@ -37,25 +38,11 @@ public class MainActivity extends AppCompatActivity {
         auth = new AuthManager(this);
         
         if (!auth.isLoggedIn()) {
-            navigateToLogin();
+            NavigationHelper.navigateToLogin(this);
             return;
         }
         
         // to home
-        navigateToHome();
-    }
-    
-    private void navigateToHome() {
-        Intent intent = new Intent(this, HomeActivity.class);
-        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-        startActivity(intent);
-        finish();
-    }
-    
-    private void navigateToLogin() {
-        Intent intent = new Intent(this, LoginActivity.class);
-        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-        startActivity(intent);
-        finish();
+        NavigationHelper.navigateToHome(this);
     }
 }

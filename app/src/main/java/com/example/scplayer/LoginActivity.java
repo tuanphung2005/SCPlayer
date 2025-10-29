@@ -12,6 +12,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.scplayer.api.ApiClient;
 import com.example.scplayer.auth.AuthManager;
+import com.example.scplayer.utils.NavigationHelper;
 
 public class LoginActivity extends AppCompatActivity {
 
@@ -50,7 +51,7 @@ public class LoginActivity extends AppCompatActivity {
         auth = new AuthManager(this);
         
         if (auth.isLoggedIn()) {
-            navigateToMain();
+            NavigationHelper.navigateToMain(this);
             return;
         }
         
@@ -116,7 +117,7 @@ public class LoginActivity extends AppCompatActivity {
                     Log.d(TAG, "Auth SUCCESS! Token: " + token.substring(0, Math.min(10, token.length())) + "...");
                     runOnUiThread(() -> {
                         Toast.makeText(LoginActivity.this, "Login successful!", Toast.LENGTH_LONG).show();
-                        navigateToMain();
+                        NavigationHelper.navigateToMain(LoginActivity.this);
                     });
                 }
                 
@@ -133,12 +134,5 @@ public class LoginActivity extends AppCompatActivity {
         }
         
         Log.d(TAG, "=== handleIntent END ===");
-    }
-    
-    private void navigateToMain() {
-        Intent intent = new Intent(this, MainActivity.class);
-        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-        startActivity(intent);
-        finish();
     }
 }

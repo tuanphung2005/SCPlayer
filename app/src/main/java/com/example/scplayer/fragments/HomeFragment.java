@@ -19,6 +19,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.scplayer.adapters.PlaylistAdapter;
 import com.example.scplayer.models.Playlist;
 import com.example.scplayer.utils.TrackLikeManager;
+import com.example.scplayer.utils.NavigationHelper;
 import com.example.scplayer.api.SoundCloudApi;
 import com.example.scplayer.api.ApiClient;
 import com.example.scplayer.models.PaginatedResponse;
@@ -61,7 +62,7 @@ public class HomeFragment extends Fragment {
         logout.setOnClickListener(v -> {
             auth.logout();
             Toast.makeText(requireContext(), "Logged out", Toast.LENGTH_SHORT).show();
-            navigateToLogin();
+            NavigationHelper.navigateToLogin(requireContext());
         });
 
         RecyclerView rv = view.findViewById(R.id.recyclerRelated);
@@ -81,13 +82,6 @@ public class HomeFragment extends Fragment {
             // Fragment is now visible, refresh related tracks
             fetchLatestLikedRelatedTracks();
         }
-    }
-
-    private void navigateToLogin() {
-        Intent intent = new Intent(requireContext(), LoginActivity.class);
-        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-        startActivity(intent);
-        requireActivity().finish();
     }
 
     private void fetchLatestLikedRelatedTracks() {
