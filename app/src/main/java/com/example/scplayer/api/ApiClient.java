@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 
 import com.example.scplayer.BuildConfig;
+import com.example.scplayer.utils.ApiConstants;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
@@ -74,8 +75,8 @@ public class ApiClient {
 
     private static String getAccessToken() {
         if (ctx == null) return null;
-        SharedPreferences prefs = ctx.getSharedPreferences("SoundCloudAuth", Context.MODE_PRIVATE);
-        return prefs.getString("access_token", null);
+        SharedPreferences prefs = ctx.getSharedPreferences(ApiConstants.PREFS_NAME, Context.MODE_PRIVATE);
+        return prefs.getString(ApiConstants.KEY_ACCESS_TOKEN, null);
     }
 
     public static String getClientId() {

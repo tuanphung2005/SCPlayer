@@ -9,6 +9,7 @@ import android.util.Log;
 import com.example.scplayer.api.ApiClient;
 import com.example.scplayer.api.SoundCloudApi;
 import com.example.scplayer.models.AccessToken;
+import com.example.scplayer.utils.ApiConstants;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -16,10 +17,6 @@ import retrofit2.Response;
 
 public class AuthManager {
     private static final String TAG = "AuthManager";
-    private static final String PREFS = "SoundCloudAuth";
-    private static final String KEY_TOKEN = "access_token";
-    private static final String KEY_REFRESH = "refresh_token";
-    private static final String KEY_EXPIRY = "token_expiry";
     
     private static final String AUTH_URL = "https://soundcloud.com/connect";
     private static final String SCOPE = "non-expiring";
@@ -30,7 +27,7 @@ public class AuthManager {
     
     public AuthManager(Context context) {
         this.ctx = context;
-        this.prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+        this.prefs = context.getSharedPreferences(ApiConstants.PREFS_NAME, Context.MODE_PRIVATE);
         this.api = ApiClient.getSoundCloudApi();
     }
     
@@ -179,25 +176,25 @@ public class AuthManager {
     
     private void saveToken(AccessToken token) {
         SharedPreferences.Editor editor = prefs.edit();
-        editor.putString(KEY_TOKEN, token.getAccessToken());
-        editor.putString(KEY_REFRESH, token.getRefreshToken());
+        editor.putString(ApiConstants.KEY_ACCESS_TOKEN, token.getAccessToken());
+        editor.putString(ApiConstants.KEY_REFRESH_TOKEN, token.getRefreshToken());
         
         long expiry = System.currentTimeMillis() + (token.getExpiresIn() * 1000);
-        editor.putLong(KEY_EXPIRY, expiry);
+        editor.putLong(ApiConstants.KEY_TOKEN_EXPIRY, expiry);
         
         editor.apply();
     }
     
     public String getAccessToken() {
-        return prefs.getString(KEY_TOKEN, null);
+        return prefs.getString(ApiConstants.KEY_ACCESS_TOKEN, null);
     }
     
     public String getRefreshToken() {
-        return prefs.getString(KEY_REFRESH, null);
+        return prefs.getString(ApiConstants.KEY_REFRESH_TOKEN, null);
     }
     
     public boolean isTokenExpired() {
-        long expiry = prefs.getLong(KEY_EXPIRY, 0);
+        long expiry = prefs.getLong(ApiConstants.KEY_TOKEN_EXPIRY, 0);
         return System.currentTimeMillis() >= expiry;
     }
     

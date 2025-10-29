@@ -16,6 +16,12 @@ public class ApiConstants {
 
     public static final int SEARCH_DEBOUNCE_DELAY_MS = 500;
     
+    // SharedPreferences
+    public static final String PREFS_NAME = "SoundCloudAuth";
+    public static final String KEY_ACCESS_TOKEN = "access_token";
+    public static final String KEY_REFRESH_TOKEN = "refresh_token";
+    public static final String KEY_TOKEN_EXPIRY = "token_expiry";
+    
     private ApiConstants() {
 
     }
