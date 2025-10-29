@@ -20,6 +20,7 @@ import com.example.scplayer.models.PaginatedResponse;
 import com.example.scplayer.models.Playlist;
 import com.example.scplayer.models.Track;
 import com.example.scplayer.utils.ApiConstants;
+import com.example.scplayer.utils.CollectionUtils;
 import com.example.scplayer.utils.PlaylistManager;
 
 import java.util.ArrayList;
@@ -114,7 +115,7 @@ public class LibraryFragment extends Fragment {
             public void onResponse(Call<List<Track>> call, Response<List<Track>> res) {
                 if (res.isSuccessful() && res.body() != null) {
                     List<Track> newLiked = res.body();
-                    boolean likedChanged = !isSameTracks(liked, newLiked);
+                    boolean likedChanged = !CollectionUtils.areTracksEqual(liked, newLiked);
                     
                     if (likedChanged) {
                         liked = newLiked;
@@ -134,7 +135,7 @@ public class LibraryFragment extends Fragment {
 
     private void loadPlaylists(boolean likedChanged) {
         playlistManager.loadUserPlaylists(playlists -> {
-            boolean playlistsChanged = !isSamePlaylists(cachedPlaylists, playlists);
+            boolean playlistsChanged = !areUserPlaylistsEqual(cachedPlaylists, playlists);
             
             if (likedChanged || playlistsChanged) {
                 fetchArtwork(playlists, 0);
@@ -201,42 +202,26 @@ public class LibraryFragment extends Fragment {
         return p;
     }
 
-    private boolean isSameTracks(List<Track> oldTracks, List<Track> newTracks) {
-        if (oldTracks.size() != newTracks.size()) {
-            return false;
-        }
-        
-        for (int i = 0; i < oldTracks.size(); i++) {
-            if (oldTracks.get(i).getId() != newTracks.get(i).getId()) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    private boolean isSamePlaylists(List<Playlist> oldPlaylists, List<Playlist> newPlaylists) {
+    private boolean areUserPlaylistsEqual(List<Playlist> oldPlaylists, List<Playlist> newPlaylists) {
         if (oldPlaylists.isEmpty()) {
             return false;
         }
 
-        int oldCount = oldPlaylists.size();
-        int newCount = newPlaylists.size();
+        // skip the "Liked Songs" synthetic playlist if it exists in oldPlaylists
+        int startIndex = (!liked.isEmpty()) ? 1 : 0;
+        int oldCount = oldPlaylists.size() - startIndex;
         
-        if (!liked.isEmpty()) {
-            oldCount--;
-        }
-        
-        if (oldCount != newCount) {
+        if (oldCount != newPlaylists.size()) {
             return false;
         }
 
-        int oldIndex = liked.isEmpty() ? 0 : 1;
+        // compare user playlists by ID
         for (int i = 0; i < newPlaylists.size(); i++) {
+            int oldIndex = startIndex + i;
             if (oldIndex >= oldPlaylists.size() || 
                 oldPlaylists.get(oldIndex).getId() != newPlaylists.get(i).getId()) {
                 return false;
             }
-            oldIndex++;
         }
         return true;
     }
