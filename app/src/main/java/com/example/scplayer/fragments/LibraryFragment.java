@@ -230,7 +230,4 @@ public class LibraryFragment extends Fragment {
         empty.setVisibility(show ? View.VISIBLE : View.GONE);
     }
 
-    private void checkIfEmpty() {
-        showEmpty(adapter.getItemCount() == 0);
-    }
 }
