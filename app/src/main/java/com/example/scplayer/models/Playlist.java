@@ -60,36 +60,12 @@ public class Playlist implements Serializable {
         this.title = title;
     }
 
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public long getDuration() {
-        return duration;
-    }
-
-    public void setDuration(long duration) {
-        this.duration = duration;
-    }
-
     public String getArtworkUrl() {
         return artworkUrl;
     }
 
     public void setArtworkUrl(String artworkUrl) {
         this.artworkUrl = artworkUrl;
-    }
-
-    public User getUser() {
-        return user;
-    }
-
-    public void setUser(User user) {
-        this.user = user;
     }
 
     public List<Track> getTracks() {
@@ -107,44 +83,8 @@ public class Playlist implements Serializable {
     public void setTrackCount(int trackCount) {
         this.trackCount = trackCount;
     }
-
-    public String getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(String createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public long getLikesCount() {
-        return likesCount;
-    }
-
-    public void setLikesCount(long likesCount) {
-        this.likesCount = likesCount;
-    }
-
-    public String getUri() {
-        return uri;
-    }
-
-    public void setUri(String uri) {
-        this.uri = uri;
-    }
     
     public String getUrn() {
         return urn;
-    }
-
-    public void setUrn(String urn) {
-        this.urn = urn;
-    }
-
-    public String getPermalinkUrl() {
-        return permalinkUrl;
-    }
-
-    public void setPermalinkUrl(String permalinkUrl) {
-        this.permalinkUrl = permalinkUrl;
     }
 }

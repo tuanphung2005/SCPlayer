@@ -192,7 +192,5 @@ public class SearchFragment extends BaseTrackFragment implements SearchResultAda
         handler.removeCallbacks(runnable);
     }
 
-    public void onTrackClick(int position) {
-        com.example.scplayer.utils.MiniPlayer.getInstance().setPlaylist(adapter.getTracks(), position);
-    }
+
 }
