@@ -13,14 +13,13 @@
         android:background="@color/dark_surface"
         android:padding="12dp">
 
-        <com.google.android.material.imageview.ShapeableImageView
+        <ImageView
             android:id="@+id/trackCover"
             android:layout_width="60dp"
             android:layout_height="60dp"
             android:background="#E0E0E0"
             android:contentDescription="Track cover"
             android:scaleType="centerCrop"
-            app:shapeAppearanceOverlay="@style/RoundedImageView"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
