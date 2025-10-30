@@ -39,6 +39,7 @@ public class LibraryFragment extends Fragment {
     private PlaylistManager playlistManager;
     private List<Track> liked = new ArrayList<>();
     private List<Playlist> cachedPlaylists = new ArrayList<>();
+    private List<Playlist> cachedUserPlaylists = new ArrayList<>();
 
     @Nullable
     @Override
@@ -135,9 +136,10 @@ public class LibraryFragment extends Fragment {
 
     private void loadPlaylists(boolean likedChanged) {
         playlistManager.loadUserPlaylists(playlists -> {
-            boolean playlistsChanged = !areUserPlaylistsEqual(cachedPlaylists, playlists);
+            boolean playlistsChanged = !CollectionUtils.arePlaylistsEqual(cachedUserPlaylists, playlists);
             
             if (likedChanged || playlistsChanged) {
+                cachedUserPlaylists = playlists;
                 fetchArtwork(playlists, 0);
             }
         });
@@ -200,30 +202,6 @@ public class LibraryFragment extends Fragment {
         p.setTrackCount(liked.size());
         p.setArtworkUrl(liked.get(0).getArtworkUrl());
         return p;
-    }
-
-    private boolean areUserPlaylistsEqual(List<Playlist> oldPlaylists, List<Playlist> newPlaylists) {
-        if (oldPlaylists.isEmpty()) {
-            return false;
-        }
-
-        // skip the "Liked Songs" synthetic playlist if it exists in oldPlaylists
-        int startIndex = (!liked.isEmpty()) ? 1 : 0;
-        int oldCount = oldPlaylists.size() - startIndex;
-        
-        if (oldCount != newPlaylists.size()) {
-            return false;
-        }
-
-        // compare user playlists by ID
-        for (int i = 0; i < newPlaylists.size(); i++) {
-            int oldIndex = startIndex + i;
-            if (oldIndex >= oldPlaylists.size() || 
-                oldPlaylists.get(oldIndex).getId() != newPlaylists.get(i).getId()) {
-                return false;
-            }
-        }
-        return true;
     }
 
     private void showEmpty(boolean show) {

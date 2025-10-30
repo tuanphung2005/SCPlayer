@@ -40,25 +40,4 @@ public class CollectionUtils {
         }
         return true;
     }
-
-    public static <T> boolean areListsEqualById(List<T> oldList, List<T> newList, IdExtractor<T> idExtractor) {
-        if (oldList == null || newList == null) {
-            return oldList == newList;
-        }
-        
-        if (oldList.size() != newList.size()) {
-            return false;
-        }
-        
-        for (int i = 0; i < oldList.size(); i++) {
-            if (idExtractor.getId(oldList.get(i)) != idExtractor.getId(newList.get(i))) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    public interface IdExtractor<T> {
-        long getId(T item);
-    }
 }
