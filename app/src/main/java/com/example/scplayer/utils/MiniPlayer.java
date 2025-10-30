@@ -22,7 +22,7 @@ public class MiniPlayer implements PlaybackService.PlaybackListener {
     private boolean isRepeatEnabled = false;
     private final List<StateListener> listeners;
     private final List<Track> originalPlaylist;
-    
+
     private PlaybackService playbackService;
     private boolean serviceBound = false;
     private Context appContext;
@@ -34,13 +34,13 @@ public class MiniPlayer implements PlaybackService.PlaybackListener {
             playbackService = binder.getService();
             playbackService.setPlaybackListener(MiniPlayer.this);
             serviceBound = true;
-            
+
             boolean serviceIsPlaying = playbackService.isPlaying();
             if (isPlaying != serviceIsPlaying) {
                 isPlaying = serviceIsPlaying;
                 notifyPlaybackStateChanged();
             }
-            
+
             if (currentTrack != null && !serviceIsPlaying) {
                 notifyPlaybackStateChanged();
             }
@@ -81,11 +81,11 @@ public class MiniPlayer implements PlaybackService.PlaybackListener {
     public void playTrack(Track track) {
         this.currentTrack = track;
         this.isPlaying = true;
-        
+
         if (serviceBound && playbackService != null) {
             playbackService.playTrack(track);
         }
-        
+
         notifyTrackChanged();
         notifyPlaybackStateChanged();
     }
@@ -113,7 +113,7 @@ public class MiniPlayer implements PlaybackService.PlaybackListener {
 
     public void togglePlayPause() {
         isPlaying = !isPlaying;
-        
+
         if (serviceBound && playbackService != null) {
             if (isPlaying) {
                 playbackService.resume();
@@ -121,7 +121,7 @@ public class MiniPlayer implements PlaybackService.PlaybackListener {
                 playbackService.pause();
             }
         }
-        
+
         notifyPlaybackStateChanged();
     }
 
@@ -151,7 +151,7 @@ public class MiniPlayer implements PlaybackService.PlaybackListener {
         if (enabled && isRepeatEnabled) {
             isRepeatEnabled = false;
         }
-        
+
         if (enabled) {
             Track current = currentTrack;
             shufflePlaylist();
@@ -188,6 +188,15 @@ public class MiniPlayer implements PlaybackService.PlaybackListener {
         }
         notifyShuffleRepeatChanged();
     }
+
+    public boolean isShuffleEnabled() {
+        return isShuffleEnabled;
+    }
+
+    public boolean isRepeatEnabled() {
+        return isRepeatEnabled;
+    }
+
     private void shufflePlaylist() {
         List<Track> shuffled = new ArrayList<>(playlist);
         java.util.Collections.shuffle(shuffled);
@@ -198,6 +207,11 @@ public class MiniPlayer implements PlaybackService.PlaybackListener {
     public Track getCurrentTrack() {
         return currentTrack;
     }
+
+    public boolean isPlaying() {
+        return isPlaying;
+    }
+
     public boolean hasTrack() {
         return currentTrack != null;
     }
@@ -263,6 +277,7 @@ public class MiniPlayer implements PlaybackService.PlaybackListener {
             }
         }
     }
+
     public PlaybackService getPlaybackService() {
         return playbackService;
     }
