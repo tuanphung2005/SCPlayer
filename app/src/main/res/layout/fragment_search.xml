@@ -31,8 +31,8 @@
                 android:padding="4dp">
 
                 <ImageView
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
+                    android:layout_width="45dp"
+                    android:layout_height="45dp"
                     android:contentDescription="searchicon"
                     android:padding="10dp"
                     android:src="@drawable/ic_search"
