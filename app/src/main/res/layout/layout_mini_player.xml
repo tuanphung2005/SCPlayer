@@ -4,17 +4,18 @@
     android:id="@+id/miniPlayerCard"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginStart="16dp"
-    android:layout_marginEnd="16dp"
+    android:layout_marginLeft="10dp"
+    android:layout_marginRight="10dp"
     android:layout_marginBottom="10dp"
-    android:visibility="gone"
+    android:visibility="visible"
+    app:cardBackgroundColor="@android:color/transparent"
     app:cardCornerRadius="12dp"
-    app:cardElevation="1dp">
+    app:cardElevation="0dp">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@color/sc_orange_secondary"
+        android:background="@drawable/mini_player_background"
         android:padding="12dp">
 
         <com.google.android.material.imageview.ShapeableImageView
@@ -24,10 +25,10 @@
             android:background="#E0E0E0"
             android:contentDescription="Track cover"
             android:scaleType="centerCrop"
-            app:shapeAppearanceOverlay="@style/RoundedImageView"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintTop_toTopOf="parent"
+            app:shapeAppearanceOverlay="@style/RoundedImageView" />
 
         <LinearLayout
             android:id="@+id/miniPlayerInfo"
@@ -48,7 +49,7 @@
                 android:ellipsize="end"
                 android:maxLines="1"
                 android:text="Track Title"
-                android:textColor="#000000"
+                android:textColor="@color/dark_text_primary"
                 android:textSize="14sp"
                 android:textStyle="bold" />
 
@@ -60,7 +61,7 @@
                 android:ellipsize="end"
                 android:maxLines="1"
                 android:text="Artist Name"
-                android:textColor="#666666"
+                android:textColor="@color/dark_text_secondary"
                 android:textSize="12sp" />
 
         </LinearLayout>
@@ -81,7 +82,8 @@
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:contentDescription="Previous track"
                 android:scaleType="fitCenter"
-                android:src="@drawable/ic_skip_previous" />
+                android:src="@drawable/ic_skip_previous"
+                app:tint="@color/dark_text_primary" />
 
             <ImageButton
                 android:id="@+id/btnPlayPause"
@@ -90,7 +92,8 @@
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:contentDescription="Play or pause"
                 android:scaleType="fitCenter"
-                android:src="@drawable/ic_play" />
+                android:src="@drawable/ic_play"
+                app:tint="@color/orange_accent" />
 
             <ImageButton
                 android:id="@+id/btnNext"
@@ -99,7 +102,8 @@
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:contentDescription="Next track"
                 android:scaleType="fitCenter"
-                android:src="@drawable/ic_skip_next" />
+                android:src="@drawable/ic_skip_next"
+                app:tint="@color/dark_text_primary" />
 
         </LinearLayout>
 

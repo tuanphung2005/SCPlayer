@@ -10,7 +10,7 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@color/sc_orange_secondary"
+        android:background="@color/dark_surface"
         android:padding="12dp">
 
         <ImageView
@@ -32,7 +32,7 @@
             android:ellipsize="end"
             android:maxLines="1"
             android:text="Track Title"
-            android:textColor="#000000"
+            android:textColor="@color/dark_text_primary"
             android:textSize="16sp"
             android:textStyle="bold"
             app:layout_constraintEnd_toEndOf="parent"
@@ -49,7 +49,7 @@
             android:ellipsize="end"
             android:maxLines="1"
             android:text="Artist Name"
-            android:textColor="#666666"
+            android:textColor="@color/dark_text_secondary"
             android:textSize="14sp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toEndOf="@id/trackCover"
@@ -62,7 +62,7 @@
             android:layout_marginStart="12dp"
             android:layout_marginTop="4dp"
             android:text="0:00"
-            android:textColor="#999999"
+            android:textColor="@color/dark_text_secondary"
             android:textSize="12sp"
             app:layout_constraintBottom_toBottomOf="@id/trackCover"
             app:layout_constraintStart_toEndOf="@id/trackCover"
