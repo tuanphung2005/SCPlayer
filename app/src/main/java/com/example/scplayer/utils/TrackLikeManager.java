@@ -22,16 +22,6 @@ public class TrackLikeManager {
         this.api = api;
         this.likedTrackIds = new ArrayList<>();
     }
-    
-    public List<Long> getLikedTrackIds() {
-        return new ArrayList<>(likedTrackIds);
-    }
-    
-    public void setLikedTrackIds(List<Long> ids) {
-        likedTrackIds.clear();
-        likedTrackIds.addAll(ids);
-    }
-    
     public boolean isLiked(long trackId) {
         return likedTrackIds.contains(trackId);
     }

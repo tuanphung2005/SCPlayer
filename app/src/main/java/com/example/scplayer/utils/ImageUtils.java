@@ -6,10 +6,6 @@ import android.widget.ImageView;
 import com.bumptech.glide.Glide;
 
 public class ImageUtils {
-    
-    private ImageUtils() {
-    }
-
     public static String getHighQualityArtworkUrl(String artworkUrl) {
         if (artworkUrl != null) {
             return artworkUrl.replace("large", "t500x500");

@@ -94,10 +94,6 @@ public class MiniPlayer implements PlaybackService.PlaybackListener {
         this.originalPlaylist.clear();
         this.originalPlaylist.addAll(playlist);
 
-        // If user provided a specific position (explicit selection), disable shuffle and repeat
-        // so the selected index maps correctly to the given list order and doesn't just repeat.
-        // This avoids playing a different track than the user tapped when shuffle was previously on,
-        // and prevents repeat mode from interfering with playlist navigation.
         if (position >= 0 && (isShuffleEnabled || isRepeatEnabled)) {
             isShuffleEnabled = false;
             isRepeatEnabled = false;
@@ -151,7 +147,7 @@ public class MiniPlayer implements PlaybackService.PlaybackListener {
     public void setShuffleEnabled(boolean enabled) {
         if (isShuffleEnabled == enabled) return;
         isShuffleEnabled = enabled;
-        // Enabling shuffle should disable repeat to avoid conflicting modes.
+
         if (enabled && isRepeatEnabled) {
             isRepeatEnabled = false;
         }
@@ -186,21 +182,12 @@ public class MiniPlayer implements PlaybackService.PlaybackListener {
     public void setRepeatEnabled(boolean enabled) {
         if (isRepeatEnabled == enabled) return;
         isRepeatEnabled = enabled;
-        // Enabling repeat should disable shuffle mode to avoid conflicts.
+
         if (enabled && isShuffleEnabled) {
             isShuffleEnabled = false;
         }
         notifyShuffleRepeatChanged();
     }
-
-    public boolean isShuffleEnabled() {
-        return isShuffleEnabled;
-    }
-
-    public boolean isRepeatEnabled() {
-        return isRepeatEnabled;
-    }
-
     private void shufflePlaylist() {
         List<Track> shuffled = new ArrayList<>(playlist);
         java.util.Collections.shuffle(shuffled);
@@ -211,11 +198,6 @@ public class MiniPlayer implements PlaybackService.PlaybackListener {
     public Track getCurrentTrack() {
         return currentTrack;
     }
-
-    public boolean isPlaying() {
-        return isPlaying;
-    }
-
     public boolean hasTrack() {
         return currentTrack != null;
     }
@@ -281,14 +263,6 @@ public class MiniPlayer implements PlaybackService.PlaybackListener {
             }
         }
     }
-
-    public void release() {
-        if (appContext != null && serviceBound) {
-            appContext.unbindService(serviceConnection);
-            serviceBound = false;
-        }
-    }
-
     public PlaybackService getPlaybackService() {
         return playbackService;
     }
