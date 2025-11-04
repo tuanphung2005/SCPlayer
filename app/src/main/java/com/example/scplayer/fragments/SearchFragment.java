@@ -160,26 +160,7 @@ public class SearchFragment extends BaseTrackFragment implements SearchResultAda
 
     @Override
     public void onLikeClick(Track track, int position, boolean isLiked) {
-        likeManager.toggleLike(track, isLiked, new TrackLikeManager.LikeCallback() {
-            @Override
-            public void onSuccess(boolean nowLiked) {
-                showToast(nowLiked ? "Track liked!" : "Track unliked");
-                if (nowLiked) {
-                    adapter.addLikedTrack(track.getId());
-                } else {
-                    adapter.removeLikedTrack(track.getId());
-                }
-            }
-
-            @Override
-            public void onError(int code, Throwable t) {
-                if (t != null) {
-                    showToast("Network error");
-                } else {
-                    showToast("Failed (HTTP " + code + ")");
-                }
-            }
-        });
+        toggleLike(track, isLiked);
     }
 
     private void showToast(String message) {

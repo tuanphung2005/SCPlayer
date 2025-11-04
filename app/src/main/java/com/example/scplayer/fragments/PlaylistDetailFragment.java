@@ -121,35 +121,15 @@ public class PlaylistDetailFragment extends BaseTrackFragment {
 
             @Override
             public void onLikeClick(Track track, int pos, boolean isLiked) {
-                likeManager.toggleLike(track, isLiked, new TrackLikeManager.LikeCallback() {
-                    @Override
-                    public void onSuccess(boolean nowLiked) {
-                        Toast.makeText(getContext(), nowLiked ? "Track liked!" : "Track unliked", Toast.LENGTH_SHORT).show();
-                        
-                        if (nowLiked) {
-                            likedTrackIds.add(track.getId());
-                        } else {
-                            likedTrackIds.remove(track.getId());
-                        }
-                        
-                        if (!nowLiked && isLikedPlaylist) {
-                            tracks.remove(pos);
-                            adapter.setTracks(tracks);
-                            showEmpty(tracks.isEmpty());
-                        }
-
-                        adapter.setLikedTrackIds(likedTrackIds);
-                    }
-
-                    @Override
-                    public void onError(int code, Throwable t) {
-                        if (t != null) {
-                            Toast.makeText(getContext(), "Network error", Toast.LENGTH_SHORT).show();
-                        } else {
-                            Toast.makeText(getContext(), "Failed (HTTP " + code + ")", Toast.LENGTH_SHORT).show();
-                        }
-                    }
-                });
+                // Use base method for common logic
+                toggleLike(track, isLiked);
+                
+                // Special case: if unliking from a "liked tracks" playlist, remove from view
+                if (!isLiked && isLikedPlaylist) {
+                    tracks.remove(pos);
+                    adapter.setTracks(tracks);
+                    showEmpty(tracks.isEmpty());
+                }
             }
         });
         recycler.setLayoutManager(new LinearLayoutManager(getContext()));

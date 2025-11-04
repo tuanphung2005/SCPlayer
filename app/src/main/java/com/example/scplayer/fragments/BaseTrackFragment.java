@@ -1,6 +1,7 @@
 package com.example.scplayer.fragments;
 
 import android.util.Log;
+import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
@@ -62,6 +63,50 @@ public abstract class BaseTrackFragment extends Fragment
 
     protected void unregisterMiniPlayerListener() {
         MiniPlayer.getInstance().removeListener(this);
+    }
+
+    // TOGGLE LIKE
+    protected void toggleLike(Track track, boolean isCurrentlyLiked) {
+        if (track == null) return;
+
+        likeManager.toggleLike(track, isCurrentlyLiked, new TrackLikeManager.LikeCallback() {
+            @Override
+            public void onSuccess(boolean nowLiked) {
+                if (getActivity() != null) {
+                    getActivity().runOnUiThread(() -> {
+
+                        BaseTrackAdapter adapter = getAdapter();
+                        if (adapter != null) {
+                            if (nowLiked) {
+                                adapter.addLikedTrack(track.getId());
+                            } else {
+                                adapter.removeLikedTrack(track.getId());
+                            }
+                        }
+                        
+                        // notify mini player
+                        MiniPlayer.getInstance().notifyTrackLikeChanged(track.getId(), nowLiked);
+                        showLikeToast(nowLiked);
+                    });
+                }
+            }
+
+            @Override
+            public void onError(int code, Throwable t) {
+                if (getContext() != null) {
+                    String message = t != null ? "Network error" : "Failed to update like status";
+                    Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+    }
+
+    protected void showLikeToast(boolean isLiked) {
+        if (getContext() != null) {
+            Toast.makeText(getContext(), 
+                isLiked ? "Added to likes" : "Removed from likes", 
+                Toast.LENGTH_SHORT).show();
+        }
     }
 
     @Override

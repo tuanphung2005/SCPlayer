@@ -16,25 +16,22 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.fragment.app.Fragment;
 
 import com.bumptech.glide.Glide;
 import com.example.scplayer.R;
+import com.example.scplayer.adapters.BaseTrackAdapter;
 import com.example.scplayer.api.ApiClient;
 import com.example.scplayer.models.Track;
 import com.example.scplayer.playback.PlaybackService;
 import com.example.scplayer.utils.ImageUtils;
 import com.example.scplayer.utils.MiniPlayer;
 import com.example.scplayer.utils.TimeUtils;
-import com.example.scplayer.utils.TrackLikeManager;
 
 import java.util.List;
 
-public class BigPlayerFragment extends Fragment implements 
-        MiniPlayer.StateListener, 
+public class BigPlayerFragment extends BaseTrackFragment implements 
         MiniPlayer.ErrorListener,
-        MiniPlayer.ShuffleRepeatListener,
-        MiniPlayer.LikeChangeListener {
+        MiniPlayer.ShuffleRepeatListener {
 
     private ImageButton btnMinimize;
     private ImageView ivAlbumCover;
@@ -52,11 +49,16 @@ public class BigPlayerFragment extends Fragment implements
     private ImageButton btnShare;
 
     private MiniPlayer miniPlayer;
-    private TrackLikeManager likeManager;
     private Handler handler;
     private boolean isShuffleEnabled = false;
     private boolean isRepeatEnabled = false;
     private boolean isLiked = false;
+
+    @Nullable
+    @Override
+    protected BaseTrackAdapter getAdapter() {
+        return null; // BigPlayer doesn't use an adapter
+    }
 
     private final Runnable updateSeekBar = new Runnable() {
         @Override
@@ -77,33 +79,28 @@ public class BigPlayerFragment extends Fragment implements
         super.onViewCreated(view, savedInstanceState);
 
         miniPlayer = MiniPlayer.getInstance();
-        likeManager = new TrackLikeManager(ApiClient.getSoundCloudApi());
+        initializeLikeManagement(); // From BaseTrackFragment
         handler = new Handler(Looper.getMainLooper());
 
         initViews(view);
         setupListeners();
-        loadLikedTracks();
+        loadLikedTracks(); // From BaseTrackFragment
         updateUI();
         startSeekBarUpdate();
         hideMiniPlayer();
+        registerMiniPlayerListener(); // From BaseTrackFragment
     }
 
-    private void loadLikedTracks() {
-        likeManager.loadLikedTracks(50, new TrackLikeManager.LoadCallback() {
-            @Override
-            public void onLoaded(List<Long> likedTrackIds) {
-                requireActivity().runOnUiThread(() -> {
-                    Track track = miniPlayer.getCurrentTrack();
-                    if (track != null) {
-                        updateLikeButton(track);
-                    }
-                });
-            }
-
-            @Override
-            public void onError(String error) {
-            }
-        });
+    @Override
+    protected void onLikedTracksLoaded(List<Long> likedTrackIds) {
+        if (getActivity() != null) {
+            getActivity().runOnUiThread(() -> {
+                Track track = miniPlayer.getCurrentTrack();
+                if (track != null) {
+                    updateLikeButton(track);
+                }
+            });
+        }
     }
 
     private void hideMiniPlayer() {
@@ -145,8 +142,6 @@ public class BigPlayerFragment extends Fragment implements
     }
 
     private void setupListeners() {
-        miniPlayer.addListener(this);
-
         btnMinimize.setOnClickListener(v -> {
             requireActivity().getSupportFragmentManager().popBackStack();
         });
@@ -167,7 +162,12 @@ public class BigPlayerFragment extends Fragment implements
             btnRepeat.setAlpha(isRepeatEnabled ? 1.0f : 0.5f);
         });
 
-        btnLike.setOnClickListener(v -> toggleLike());
+        btnLike.setOnClickListener(v -> {
+            Track track = miniPlayer.getCurrentTrack();
+            if (track != null) {
+                toggleLike(track, isLiked);
+            }
+        });
 
         btnShare.setOnClickListener(v -> shareTrack());
 
@@ -224,30 +224,6 @@ public class BigPlayerFragment extends Fragment implements
         if (track == null) return;
         isLiked = likeManager.isLiked(track.getId());
         btnLike.setImageResource(isLiked ? R.drawable.ic_heart_filled : R.drawable.ic_heart_outline);
-    }
-
-    private void toggleLike() {
-        Track track = miniPlayer.getCurrentTrack();
-        if (track == null) return;
-
-        likeManager.toggleLike(track, isLiked, new TrackLikeManager.LikeCallback() {
-            @Override
-            public void onSuccess(boolean nowLiked) {
-                requireActivity().runOnUiThread(() -> {
-                    isLiked = nowLiked;
-                    btnLike.setImageResource(isLiked ? R.drawable.ic_heart_filled : R.drawable.ic_heart_outline);
-                    miniPlayer.notifyTrackLikeChanged(track.getId(), nowLiked);
-                    Toast.makeText(getContext(), 
-                        isLiked ? "Added to likes" : "Removed from likes", 
-                        Toast.LENGTH_SHORT).show();
-                });
-            }
-
-            @Override
-            public void onError(int code, Throwable t) {
-                Toast.makeText(requireContext(), "Failed to update like status", Toast.LENGTH_SHORT).show();
-            }
-        });
     }
 
     private void shareTrack() {
@@ -316,10 +292,8 @@ public class BigPlayerFragment extends Fragment implements
 
     @Override
     public void onDestroyView() {
-        super.onDestroyView();
-        miniPlayer.removeListener(this);
+        super.onDestroyView(); // This calls unregisterMiniPlayerListener from base
         handler.removeCallbacks(updateSeekBar);
         showMiniPlayer();
-        
     }
 }
