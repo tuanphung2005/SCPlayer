@@ -141,39 +141,7 @@ public class AuthManager {
         });
     }
     
-    public void refreshAccessToken(RefreshCallback callback) {
-        String refresh = getRefreshToken();
-        if (refresh == null) {
-            callback.onError("No refresh token available");
-            return;
-        }
-        
-        Call<AccessToken> call = api.refreshToken(
-                "refresh_token",
-                ApiClient.getClientId(),
-                ApiClient.getClientSecret(),
-                refresh
-        );
-        
-        call.enqueue(new Callback<AccessToken>() {
-            @Override
-            public void onResponse(Call<AccessToken> call, Response<AccessToken> res) {
-                if (res.isSuccessful() && res.body() != null) {
-                    AccessToken token = res.body();
-                    saveToken(token);
-                    callback.onSuccess(token.getAccessToken());
-                } else {
-                    callback.onError("Failed to refresh token: " + res.code());
-                }
-            }
-            
-            @Override
-            public void onFailure(Call<AccessToken> call, Throwable t) {
-                callback.onError("Network error: " + t.getMessage());
-            }
-        });
-    }
-    
+
     private void saveToken(AccessToken token) {
         SharedPreferences.Editor editor = prefs.edit();
         editor.putString(ApiConstants.KEY_ACCESS_TOKEN, token.getAccessToken());
@@ -187,10 +155,6 @@ public class AuthManager {
     
     public String getAccessToken() {
         return prefs.getString(ApiConstants.KEY_ACCESS_TOKEN, null);
-    }
-    
-    public String getRefreshToken() {
-        return prefs.getString(ApiConstants.KEY_REFRESH_TOKEN, null);
     }
     
     public boolean isTokenExpired() {
@@ -207,11 +171,6 @@ public class AuthManager {
     }
     
     public interface AuthCallback {
-        void onSuccess(String token);
-        void onError(String error);
-    }
-    
-    public interface RefreshCallback {
         void onSuccess(String token);
         void onError(String error);
     }
